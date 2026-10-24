@@ -69,6 +69,20 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 #bullPop.zero{color:#f1eadc;font-size:clamp(28px,8vw,49px)}
 #bullPop.hat{color:#c51f27;text-shadow:0 5px 0 #2c180fa1,0 0 26px #ffd77b}
 @keyframes stamp{0%{opacity:0;transform:translate(-50%,-50%) scale(1.75) rotate(-9deg)}12%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-9deg)}79%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-9deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1) rotate(-9deg)}}
+/* Full-screen celebration layer: above everything, never takes input. */
+#fx{position:fixed;inset:0;z-index:50;pointer-events:none;overflow:hidden}
+#fx canvas,.fx-layer{position:absolute;inset:0;width:100%;height:100%}
+.fx-layer,.fx-rays{opacity:0}
+.fx-rays{position:absolute;left:50%;top:50%;width:260vmax;height:260vmax;margin:-130vmax 0 0 -130vmax;-webkit-mask:radial-gradient(circle,#000 6%,transparent 50%);mask:radial-gradient(circle,#000 6%,transparent 50%)}
+#fxBox{position:absolute;left:50%;top:50%;width:94vw;text-align:center;opacity:0;transform:translate(-50%,-50%)}
+#fxText{display:block;font:400 min(19vw,30vh)/.95 'Dela Gothic One','Arial Black',sans-serif;letter-spacing:-.04em;color:#fff;-webkit-text-stroke:.09em #c8102e;paint-order:stroke fill;text-shadow:0 .07em 0 #2c180fa8,0 0 .35em #ff3b3bb3;word-break:keep-all}
+#fxText.long{font-size:min(14vw,22vh)}
+#fxText.gold{color:#ffe066;-webkit-text-stroke-color:#b3261e;text-shadow:0 .07em 0 #2c180fa8,0 0 .4em #ffd23f}
+#fxText.rainbow{color:transparent;background:linear-gradient(90deg,#ff3b3b,#ff9f1c,#ffe14d,#3ddc84,#3aa0ff,#b45cff,#ff3b3b) 0 0/200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:.03em #2c180f;text-shadow:none;filter:drop-shadow(0 .06em 0 #2c180fb3) drop-shadow(0 0 .2em #fff);animation:fx-rainbow 1.2s linear infinite}
+#fxText.gray{color:#e6dfd3;-webkit-text-stroke-color:#3a3530;text-shadow:0 .06em 0 #0009}
+#fxSub{display:block;margin-top:.2em;font-size:min(8vw,12vh);line-height:1}
+@keyframes fx-rainbow{to{background-position:200% 0}}
+@media(prefers-reduced-motion:reduce){#fxText.rainbow{animation:none}}
 .stats{display:flex;justify-content:space-between;align-items:center;padding:12px 3px 5px;gap:8px}
 .stat-left{font-size:11px;color:var(--muted);flex:1}
 .stat-head{font-size:11px;letter-spacing:.025em;font-weight:800}
@@ -269,6 +283,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     <label class="toggleline"><input id="autoInner" type="checkbox" checked> インブルを画像から自動推定（β版）</label>
     <p class="sound-legend">赤い外円＝アウターブル、内側の細い円＝インブルの目安。自動判定の精度はカメラ角度に依存します。誤った場合は <strong>T</strong> で最後のBULLの内外を切り替えられます。</p>
     <label class="toggleline"><input id="autoRound" type="checkbox" checked> 矢の回収動作からラウンド終了を自動推定（β版）</label>
+    <label class="toggleline"><input id="bigFx" type="checkbox" checked> 画面いっぱいのド派手演出（画面の光で誤判定しないよう、演出中は判定を一時停止）</label>
     <div class="secondary"><span style="font-size:12px;color:var(--muted)">演出テスト：</span><button id="oneTestBtn" class="small-btn" type="button">ONE BULL</button><button id="lowTestBtn" class="small-btn" type="button">LOW TON</button><button id="hatTestBtn" class="small-btn" type="button">HAT TRICK</button></div>
     <p class="subtle">ブルの大きさは1〜35%で調整できます。カメラを斜めに置いたときは、斜め補正の縦横比と傾きで赤い円を映像上のブルの形（楕円）に合わせてください（100%・0°で真円）。赤い円の位置と設定はこの端末に保存されます。小さいブルは矢の影や軸で誤判定する場合があります。カメラを固定し、矢を回収するときは的付近に手が映るようにしてください。</p>
     <div class="secondary"><button id="resetSettingsBtn" type="button" class="small-btn">↺ 設定を初期値に戻す</button></div>
@@ -281,6 +296,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     <p class="notice">※ スマホのカメラ利用にはブラウザでの許可と HTTPS のページが必要です。端末で HTML ファイルを直接開いただけではカメラが利用できない場合があります。</p>
   </div>
 </main>
+<div id="fx" aria-hidden="true"><canvas id="fxCanvas"></canvas><div id="fxBox"><span id="fxText"></span><span id="fxSub"></span></div></div>
 <script>
 (() => {
   'use strict';
@@ -296,6 +312,8 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   const aspectRange=$('aspectRange'), aspectLabel=$('aspectLabel'), tiltRange=$('tiltRange'), tiltLabel=$('tiltLabel');
   const pill=$('pill'), sceneTip=$('sceneTip'), signalBar=$('signalBar'), bullCountEl=$('bullCount');
   const toast=$('toast'), bullPop=$('bullPop');
+  const fx=$('fx'), fxCanvas=$('fxCanvas'), fctx=fxCanvas.getContext('2d'), fxBox=$('fxBox'), fxText=$('fxText'), fxSub=$('fxSub');
+  const bigFx=$('bigFx'), shell=document.querySelector('.shell');
   const roundTitle=$('roundTitle'),roundCurrent=$('roundCurrent'),roundResult=$('roundResult');
   const dartSlots=$('dartSlots'),roundHistory=$('roundHistory');
   const addBullBtn=$('addBullBtn'),addInnerBtn=$('addInnerBtn'),missBtn=$('missBtn'),undoBtn=$('undoBtn'),endRoundBtn=$('endRoundBtn'),toggleBullBtn=$('toggleBullBtn'),autoRound=$('autoRound'),autoInner=$('autoInner');
@@ -323,13 +341,14 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   }
   const savePrefs=()=>{
     try{localStorage.setItem(PREF_KEY,JSON.stringify({x:target.x,y:target.y,savedTarget,size:target.size,aspect:target.aspect,tilt:target.tilt,
-      sens:Number(sensRange.value),sound:soundStyle.value,voice:voiceEnabled.checked,auto:autoRound.checked,autoInner:autoInner.checked}))}catch(e){}
+      sens:Number(sensRange.value),sound:soundStyle.value,voice:voiceEnabled.checked,auto:autoRound.checked,autoInner:autoInner.checked,bigFx:bigFx.checked}))}catch(e){}
   };
   if([1,2,3,4,5].includes(savedPrefs.sens))sensRange.value=String(savedPrefs.sens);
   if(['sample','impact','arcade','bell'].includes(savedPrefs.sound))soundStyle.value=savedPrefs.sound;
   if(typeof savedPrefs.voice==='boolean')voiceEnabled.checked=savedPrefs.voice;
   if(typeof savedPrefs.auto==='boolean')autoRound.checked=savedPrefs.auto;
   if(typeof savedPrefs.autoInner==='boolean')autoInner.checked=savedPrefs.autoInner;
+  if(typeof savedPrefs.bigFx==='boolean')bigFx.checked=savedPrefs.bigFx;
   let roundNo=1,shots=[],roundLocked=false,roundFinalizedAt=0,roundStartedAt=performance.now();
   const roundLog=[];
   let resultTimer=null,autoNextTimer=null,roundRevision=0,roundAdvanceAfter=0;
@@ -337,6 +356,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   let base=null, lastFrame=null, baselineReadyAt=0;
   let holdAt=0, cooldownUntil=0, globalMoveAt=0;
   let flashAt=0, lastProcess=0, lastDetailAt=0, loopId=0;
+  let fxBusyUntil=0; // camera frames are ignored until then (full-screen effects light up the room)
   const PROCESS_MS=120, HOLD_MS=610, COOLDOWN_MS=1350;
   const densities=[0,.085,.060,.036,.023,.013];
   const diffs=[0,43,35,29,23,17];
@@ -442,6 +462,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   voiceEnabled.addEventListener('change',savePrefs);
   autoRound.addEventListener('change',savePrefs);
   autoInner.addEventListener('change',savePrefs);
+  bigFx.addEventListener('change',savePrefs);
   sensLabel.textContent=sensRange.value+' / 5';
   resetBtn.addEventListener('click',()=>{
     invalidateBase(true);
@@ -455,7 +476,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     if(stream){target.x=.5;target.y=.5;}
     sensRange.value=sensRange.defaultValue;sensLabel.textContent=sensRange.value+' / 5';
     soundStyle.value=(sampleUrls.outer||sampleUrls.inner)?'sample':'impact';
-    for(const box of [voiceEnabled,autoRound,autoInner])box.checked=box.defaultChecked;
+    for(const box of [voiceEnabled,autoRound,autoInner,bigFx])box.checked=box.defaultChecked;
     updateSizeReadout();updateEllipseReadout();
     invalidateBase(true);savePrefs();drawOverlay();
     if(!watching)detail.textContent='設定を初期値に戻しました';
@@ -680,11 +701,137 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     showPop(kind==='hat'?'HAT TRICK!':kind==='low'?'LOW TON!':'ONE BULL!',kind);
   }
   function showPop(label,kind=''){
+    flashAt=performance.now();drawOverlay();
+    if(bigFx.checked){playFx(label,kind);return;}
     bullPop.textContent=label;
     bullPop.className=kind?('special '+kind):'';
     void bullPop.offsetWidth;
     bullPop.classList.add('show');
-    flashAt=performance.now();drawOverlay();
+  }
+
+  // Full-screen celebration: flash, rays, particles, screen shake and a giant stamp, scaled up by result.
+  // With reduced motion only the text fades in and out.
+  const FX_RED=['#ff2b3b','#ffffff','#ffc23d','#ff7a45'], FX_GOLD=['#ffd23f','#fff6c8','#ff9f1c','#ffffff'];
+  const FX_RAINBOW=['#ff3b3b','#ff9f1c','#ffe14d','#3ddc84','#3aa0ff','#b45cff'];
+  const FX={
+    '':   {dur:1300,flash:['#ff2b3b'],shake:10,cls:''},
+    inner:{dur:1500,flash:['#ffc531'],shake:16,cls:'long gold',rays:'repeating-conic-gradient(#ffd23f 0 9deg,transparent 9deg 18deg)'},
+    one:  {dur:1600,flash:['#ff2b3b'],shake:10,cls:'long',sub:'🎯',rays:'repeating-conic-gradient(#ff5a4d 0 9deg,transparent 9deg 18deg)'},
+    low:  {dur:2000,flash:['#ff2b3b','#ff8a1f'],shake:18,cls:'long',sub:'🎯🎯',rays:'repeating-conic-gradient(#ff5a4d 0 8deg,transparent 8deg 15deg,#ff9f1c 15deg 23deg,transparent 23deg 30deg)'},
+    hat:  {dur:2800,flash:['#ff2b3b','#ffc531','#ffffff'],shake:26,cls:'long rainbow',sub:'🎩🎯🎯🎯',
+           rays:'repeating-conic-gradient(#ff3b3b 0 7deg,transparent 7deg 12deg,#ffe14d 12deg 19deg,transparent 19deg 24deg,#3aa0ff 24deg 31deg,transparent 31deg 36deg)'},
+    zero: {dur:1000,dark:true,cls:'long gray'}
+  };
+  const FX_SETTLE_MS=500; // let the camera exposure settle after the screen stops flashing
+  const FX_TEXT=[
+    {opacity:0,transform:'translate(-50%,-50%) scale(2.8) rotate(-12deg)',easing:'cubic-bezier(.2,.9,.3,1.3)'},
+    {opacity:1,transform:'translate(-50%,-50%) scale(1) rotate(-6deg)',offset:.16},
+    {opacity:1,transform:'translate(-50%,-50%) scale(1.07) rotate(-6deg)',offset:.8,easing:'ease-in'},
+    {opacity:0,transform:'translate(-50%,-50%) scale(1.5) rotate(-6deg)'}
+  ];
+  const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  let fxParts=[],fxRings=[],fxLoopId=0,fxLast=0,fxTextAnim=null;
+  function fxLayer(cls,bg,keyframes,options){
+    const el=document.createElement('div');el.className=cls;el.style.background=bg;
+    fx.insertBefore(el,fxCanvas);
+    el.animate(keyframes,options).onfinish=()=>el.remove();
+  }
+  function fxResize(){
+    const dpr=Math.min(window.devicePixelRatio||1,2),w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr);
+    if(fxCanvas.width!==w||fxCanvas.height!==h){fxCanvas.width=w;fxCanvas.height=h;}
+    fctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  // drag is per 1/60 s, g in px/s²
+  function fxBurst(x,y,n,colors,speed,confetti){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2,v=speed*(.3+Math.random()*.7);
+      fxParts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-speed*.2,life:0,max:900+Math.random()*800,
+        drag:confetti?.93:.965,g:confetti?300:700,size:confetti?7+Math.random()*7:2+Math.random()*3,
+        color:colors[i%colors.length],rot:Math.random()*6,vr:(Math.random()-.5)*12,confetti});
+    }
+    fxStart();
+  }
+  function fxRain(n,colors){
+    for(let i=0;i<n;i++)fxParts.push({x:Math.random()*innerWidth,y:-20-Math.random()*innerHeight*.4,vx:(Math.random()-.5)*80,vy:250+Math.random()*150,
+      life:0,max:3500,drag:.99,g:120,size:8+Math.random()*7,color:colors[i%colors.length],rot:Math.random()*6,vr:(Math.random()-.5)*10,confetti:true});
+    fxStart();
+  }
+  function fxRing(x,y,color,delay=0){fxRings.push({x,y,color,life:-delay,max:750});fxStart();}
+  function fxStart(){
+    if(fxParts.length>1200)fxParts.splice(0,fxParts.length-1200);
+    if(!fxLoopId){fxLast=0;fxLoopId=requestAnimationFrame(fxFrame);}
+  }
+  function fxFrame(t){
+    const dt=fxLast?Math.min(.05,(t-fxLast)/1000):0;fxLast=t;
+    const W=innerWidth,H=innerHeight,reach=Math.hypot(W,H)*.7;
+    fctx.clearRect(0,0,W,H);
+    fxRings=fxRings.filter(r=>{
+      r.life+=dt*1000;if(r.life<0)return true;
+      const p=r.life/r.max;if(p>=1)return false;
+      fctx.globalAlpha=1-p;fctx.strokeStyle=r.color;fctx.lineWidth=4+22*(1-p);
+      fctx.beginPath();fctx.arc(r.x,r.y,reach*(1-(1-p)*(1-p)),0,Math.PI*2);fctx.stroke();
+      return true;
+    });
+    fxParts=fxParts.filter(p=>{
+      p.life+=dt*1000;if(p.life>=p.max||p.y>H+40)return false;
+      const k=Math.pow(p.drag,dt*60);
+      p.vx*=k;p.vy=p.vy*k+p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt;
+      fctx.globalAlpha=Math.min(1,(1-p.life/p.max)*2);fctx.fillStyle=p.color;
+      if(p.confetti){
+        fctx.save();fctx.translate(p.x,p.y);fctx.rotate(p.rot);
+        fctx.fillRect(-p.size/2,-p.size/4,p.size,p.size/2*Math.abs(Math.cos(p.rot*1.7))+1);fctx.restore();
+      }else{fctx.beginPath();fctx.arc(p.x,p.y,p.size,0,Math.PI*2);fctx.fill();}
+      return true;
+    });
+    fctx.globalAlpha=1;
+    fxLoopId=(fxParts.length||fxRings.length)?requestAnimationFrame(fxFrame):0;
+  }
+  function fxShake(px){
+    const k=[0,-1,.9,-.7,.5,-.3,0].map((f,i)=>({transform:`translate(${f*px}px,${(i%2?-.6:.6)*f*px}px)`}));
+    shell.animate(k,{duration:500,easing:'ease-out'});
+  }
+  function fxOrigin(kind){
+    // Hits burst from the bull on screen; results (and an off-screen bull) from the center.
+    if(kind===''||kind==='inner'){
+      const r=scene.getBoundingClientRect(),x=r.left+target.x*r.width,y=r.top+target.y*r.height;
+      if(x>=0&&x<=innerWidth&&y>=0&&y<=innerHeight)return {x,y};
+    }
+    return {x:innerWidth/2,y:innerHeight/2};
+  }
+  function playFx(label,kind){
+    const cfg=FX[kind]||FX[''];
+    fxBusyUntil=performance.now()+cfg.dur+FX_SETTLE_MS;
+    fxText.textContent=label;fxText.className=cfg.cls;fxSub.textContent=cfg.sub||'';
+    if(fxTextAnim)fxTextAnim.cancel();
+    if(reduceMotion.matches){
+      fxTextAnim=fxBox.animate([{opacity:0},{opacity:1,offset:.15},{opacity:1,offset:.8},{opacity:0}],{duration:cfg.dur});
+      return;
+    }
+    fxTextAnim=fxBox.animate(FX_TEXT,{duration:cfg.dur});
+    if(cfg.dark){
+      fxLayer('fx-layer','radial-gradient(circle,#0000004d,#000000c8)',[{opacity:0},{opacity:1,offset:.2},{opacity:1,offset:.75},{opacity:0}],{duration:cfg.dur});
+      return;
+    }
+    const W=innerWidth,H=innerHeight,s=Math.max(W,H),o=fxOrigin(kind);
+    // Flashes stay below 3 per second (WCAG 2.3.1).
+    cfg.flash.forEach((c,i)=>fxLayer('fx-layer',`radial-gradient(circle at ${o.x}px ${o.y}px,${c} 0,${c}cc 35%,${c}00 85%)`,
+      [{opacity:0},{opacity:c==='#ffffff'?.45:.6,offset:.18},{opacity:0}],{duration:520,delay:i*400,easing:'ease-out'}));
+    if(cfg.rays)fxLayer('fx-rays',cfg.rays,[{opacity:0,transform:'rotate(0deg) scale(.7)'},{opacity:.5,offset:.2},{opacity:.4,offset:.75},{opacity:0,transform:'rotate(70deg) scale(1.1)'}],{duration:cfg.dur,easing:'ease-out'});
+    fxResize();
+    if(kind===''){fxBurst(o.x,o.y,90,FX_RED,s*.9,false);fxBurst(o.x,o.y,30,FX_RED,s*.7,true);fxRing(o.x,o.y,'#ffffff');}
+    else if(kind==='inner'){fxBurst(o.x,o.y,160,FX_GOLD,s*1.1,false);fxBurst(o.x,o.y,60,FX_GOLD,s*.8,true);fxRing(o.x,o.y,'#ffe27a');fxRing(o.x,o.y,'#ffffff',180);}
+    else if(kind==='one'){fxBurst(o.x,o.y,130,FX_RED,s*.9,true);fxRing(o.x,o.y,'#ffffff');}
+    else if(kind==='low'){
+      fxBurst(o.x,o.y,150,FX_RED,s*.9,true);fxRing(o.x,o.y,'#ffffff');
+      setTimeout(()=>{fxBurst(W*.2,H*.35,90,FX_GOLD,s*.6,true);fxBurst(W*.8,H*.35,90,FX_GOLD,s*.6,true);},400);
+    }else if(kind==='hat'){
+      fxRain(220,FX_RAINBOW);fxRing(o.x,o.y,'#ffffff');
+      [[.22,.3],[.78,.28],[.5,.62]].forEach(([px,py],i)=>setTimeout(()=>{
+        fxBurst(W*px,H*py,120,FX_RAINBOW,s*.75,false);fxRing(W*px,H*py,FX_RAINBOW[i*2]);
+      },250+i*550));
+      setTimeout(()=>fxShake(cfg.shake*.7),900);
+    }
+    fxShake(cfg.shake);
   }
   function roundBulls(){return shots.filter(x=>x!=='miss').length;}
   function updateRoundUI(){
@@ -978,6 +1125,8 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   }
   function processFrame(now){
     if(!watching)return;
+    // Skip frames lit by a full-screen effect, then re-capture the background (includes the dart just hit).
+    if(now<fxBusyUntil){holdAt=0;previousMotionFrame=null;base=null;return;}
     const frame=readFrame();
     if(!frame)return;
     lastFrame=frame;
