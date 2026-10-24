@@ -240,6 +240,10 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
       <label for="sizeNumber">数値で指定</label><input id="sizeNumber" type="number" inputmode="decimal" min="1" max="35" step="0.5" value="4"><span class="size-unit">%</span>
       <span id="sizePxHint">映像上の直径 約16px</span>
     </div>
+    <div class="field"><label for="aspectRange">斜め補正：縦横比</label><span id="aspectLabel" class="value">100%</span></div>
+    <input id="aspectRange" type="range" min="30" max="100" step="1" value="100" aria-label="判定エリアの縦横比">
+    <div class="field"><label for="tiltRange">斜め補正：傾き</label><span id="tiltLabel" class="value">0°</span></div>
+    <input id="tiltRange" type="range" min="-90" max="90" step="1" value="0" aria-label="判定エリアの傾き">
     <div class="field"><label for="sensRange">検出感度</label><span id="sensLabel" class="value">3 / 5</span></div>
     <input id="sensRange" type="range" min="1" max="5" step="1" value="3" aria-label="検出感度">
     <div class="secondary">
@@ -256,7 +260,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     <p class="sound-legend">赤い外円＝アウターブル、内側の細い円＝インブルの目安。自動判定の精度はカメラ角度に依存します。誤った場合は <strong>T</strong> で最後のBULLの内外を切り替えられます。</p>
     <label class="toggleline"><input id="autoRound" type="checkbox" checked> 矢の回収動作からラウンド終了を自動推定（β版）</label>
     <div class="secondary"><span style="font-size:12px;color:var(--muted)">演出テスト：</span><button id="oneTestBtn" class="small-btn" type="button">ONE BULL</button><button id="lowTestBtn" class="small-btn" type="button">LOW TON</button><button id="hatTestBtn" class="small-btn" type="button">HAT TRICK</button></div>
-    <p class="subtle">ブルの大きさは1〜35%で調整できます。赤い円の位置と設定はこの端末に保存されます。小さいブルは矢の影や軸で誤判定する場合があります。カメラを固定し、矢を回収するときは的付近に手が映るようにしてください。</p>
+    <p class="subtle">ブルの大きさは1〜35%で調整できます。カメラを斜めに置いたときは、斜め補正の縦横比と傾きで赤い円を映像上のブルの形（楕円）に合わせてください（100%・0°で真円）。赤い円の位置と設定はこの端末に保存されます。小さいブルは矢の影や軸で誤判定する場合があります。カメラを固定し、矢を回収するときは的付近に手が映るようにしてください。</p>
   </div>
   <div class="instructions">
     <p><strong>使い方：</strong> カメラを固定 → カメラ起動 → ブル位置とサイズを調整 → 判定開始 → 3投を投げます。BULLは自動記録されます。</p>
@@ -278,6 +282,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   const sizeRange=$('sizeRange'), sizeNumber=$('sizeNumber'), sizeMinus=$('sizeMinus'), sizePlus=$('sizePlus'), sizePxHint=$('sizePxHint');
   const sensRange=$('sensRange'), resetBtn=$('resetBtn'), soundStyle=$('soundStyle'), voiceEnabled=$('voiceEnabled');
   const sizeLabel=$('sizeLabel'), sensLabel=$('sensLabel'), badgeText=$('badgeText'), detail=$('detail');
+  const aspectRange=$('aspectRange'), aspectLabel=$('aspectLabel'), tiltRange=$('tiltRange'), tiltLabel=$('tiltLabel');
   const pill=$('pill'), sceneTip=$('sceneTip'), signalBar=$('signalBar'), bullCountEl=$('bullCount');
   const toast=$('toast'), bullPop=$('bullPop');
   const roundTitle=$('roundTitle'),roundCurrent=$('roundCurrent'),roundResult=$('roundResult');
@@ -295,14 +300,17 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     }catch(e){return {}}
   };
   const savedPrefs=loadPrefs();
-  let target={x:.53,y:.715,size:4}, count=0;
+  // aspect (%) and tilt (deg) turn the bull circle into an ellipse for an angled camera.
+  let target={x:.53,y:.715,size:4,aspect:100,tilt:0}, count=0;
   if(typeof savedPrefs.size==='number'&&savedPrefs.size>=1&&savedPrefs.size<=35)target.size=savedPrefs.size;
+  if(typeof savedPrefs.aspect==='number'&&savedPrefs.aspect>=30&&savedPrefs.aspect<=100)target.aspect=savedPrefs.aspect;
+  if(typeof savedPrefs.tilt==='number'&&savedPrefs.tilt>=-90&&savedPrefs.tilt<=90)target.tilt=savedPrefs.tilt;
   if(savedPrefs.savedTarget===true&&typeof savedPrefs.x==='number'&&typeof savedPrefs.y==='number'){
     target.x=Math.max(.06,Math.min(.94,savedPrefs.x));
     target.y=Math.max(.06,Math.min(.94,savedPrefs.y));savedTarget=true;
   }
   const savePrefs=()=>{
-    try{localStorage.setItem(PREF_KEY,JSON.stringify({x:target.x,y:target.y,savedTarget,size:target.size,
+    try{localStorage.setItem(PREF_KEY,JSON.stringify({x:target.x,y:target.y,savedTarget,size:target.size,aspect:target.aspect,tilt:target.tilt,
       sens:Number(sensRange.value),sound:soundStyle.value,voice:voiceEnabled.checked,auto:autoRound.checked,autoInner:autoInner.checked}))}catch(e){}
   };
   if([1,2,3,4,5].includes(savedPrefs.sens))sensRange.value=String(savedPrefs.sens);
@@ -356,27 +364,39 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     savePrefs();
     drawOverlay();
   }
+  function updateEllipseReadout(){
+    aspectRange.value=String(target.aspect);tiltRange.value=String(target.tilt);
+    aspectLabel.textContent=target.aspect+'%';tiltLabel.textContent=target.tilt+'°';
+  }
+  function setEllipse(){
+    target.aspect=Number(aspectRange.value);target.tilt=Number(tiltRange.value);
+    updateEllipseReadout();
+    invalidateBase(true);
+    savePrefs();
+    drawOverlay();
+  }
   function drawOverlay(){
     const w=scene.clientWidth,h=scene.clientHeight;
     octx.clearRect(0,0,w,h);
     const x=target.x*w,y=target.y*h,r=effectiveRadius(w,h);
+    const rb=r*target.aspect/100,tilt=target.tilt*Math.PI/180;
     const hot=performance.now()-flashAt<620;
     octx.save();
     octx.shadowColor=hot?'#ffc76f':'#e51e30';octx.shadowBlur=hot?24:5;
     octx.lineWidth=r<8?4:5;
     octx.strokeStyle='rgba(255,255,255,.88)';
-    octx.beginPath();octx.arc(x,y,r,0,Math.PI*2);octx.stroke();
+    octx.beginPath();octx.ellipse(x,y,r,rb,tilt,0,Math.PI*2);octx.stroke();
     octx.shadowBlur=0;
     octx.lineWidth=r<8?2:2.7;
     octx.strokeStyle=hot?'#ffb736':'#e42c36';
-    octx.beginPath();octx.arc(x,y,r,0,Math.PI*2);octx.stroke();
+    octx.beginPath();octx.ellipse(x,y,r,rb,tilt,0,Math.PI*2);octx.stroke();
     // Inner ring is a visual guide; the hit area of v3 remains unchanged.
     octx.strokeStyle=hot?'#fff2bb':'#ffbe63';octx.lineWidth=Math.max(1.4,Math.min(2.4,r*.23));
-    octx.beginPath();octx.arc(x,y,Math.max(1.2,r*.5),0,Math.PI*2);octx.stroke();
+    octx.beginPath();octx.ellipse(x,y,Math.max(1.2,r*.5),Math.max(1.2,rb*.5),tilt,0,Math.PI*2);octx.stroke();
     octx.strokeStyle=hot?'#ffb736':'#e42c36';octx.lineWidth=1.3;
-    const cross=Math.max(5,Math.min(9,r*.7));
-    octx.beginPath();octx.moveTo(x-cross,y);octx.lineTo(x+cross,y);
-    octx.moveTo(x,y-cross);octx.lineTo(x,y+cross);octx.stroke();
+    const cross=Math.max(5,Math.min(9,r*.7)),dx=cross*Math.cos(tilt),dy=cross*Math.sin(tilt);
+    octx.beginPath();octx.moveTo(x-dx,y-dy);octx.lineTo(x+dx,y+dy);
+    octx.moveTo(x+dy,y-dx);octx.lineTo(x-dy,y+dx);octx.stroke();
     octx.restore();
   }
   function invalidateBase(restart=true){
@@ -402,6 +422,9 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   sizeNumber.addEventListener('change',()=>setBullSize(sizeNumber.value));
   sizeMinus.addEventListener('click',()=>setBullSize(target.size-.5));
   sizePlus.addEventListener('click',()=>setBullSize(target.size+.5));
+  aspectRange.addEventListener('input',setEllipse);
+  tiltRange.addEventListener('input',setEllipse);
+  updateEllipseReadout();
   sensRange.addEventListener('input',()=>{sensLabel.textContent=sensRange.value+' / 5';holdAt=0;savePrefs();});
   soundStyle.addEventListener('change',savePrefs);
   voiceEnabled.addEventListener('change',savePrefs);
@@ -953,6 +976,8 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     const w=scratch.width,h=scratch.height;
     const cx=Math.round(target.x*w),cy=Math.round(target.y*h);
     const r=effectiveRadius(w,h),r2=r*r;
+    // Hit area is an ellipse (semi-axes r and rb, rotated by tilt); 100% / 0° is the original circle.
+    const rb=r*target.aspect/100,rb2=rb*rb,tilt=target.tilt*Math.PI/180,cos=Math.cos(tilt),sin=Math.sin(tilt);
     const sens=Number(sensRange.value);
     // Estimate exposure shift from a sparse grid outside the bull.
     const samples=[], step=24;
@@ -988,11 +1013,12 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     const y0=Math.max(0,Math.floor(cy-r)),y1=Math.min(h-1,Math.ceil(cy+r));
     let dark=0,light=0,area=0,innerDark=0,innerArea=0;
     for(let y=y0;y<=y1;y++){
-      const dy2=(y-cy)*(y-cy),off=y*w;
+      const dy=y-cy,off=y*w;
       for(let x=x0;x<=x1;x++){
-        if((x-cx)*(x-cx)+dy2>r2)continue;
+        const dx=x-cx,u=dx*cos+dy*sin,v=dy*cos-dx*sin,e=u*u/r2+v*v/rb2;
+        if(e>1)continue;
         area++;
-        const inner=(x-cx)*(x-cx)+dy2<=r2*.25;
+        const inner=e<=.25;
         if(inner)innerArea++;
         const d=base[off+x]-frame[off+x]-exposure;
         if(d>diffs[sens]){dark++;if(inner)innerDark++;}
@@ -1024,7 +1050,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
         const outerDark=dark-innerDark;
         const innerDensity=innerDark/Math.max(1,innerArea);
         const outerDensity=outerDark/Math.max(1,area-innerArea);
-        const isInner=autoInner.checked && r>=3 &&
+        const isInner=autoInner.checked && rb>=3 &&
           innerDark>=Math.max(3,Math.ceil(minimum*.52)) &&
           innerDark>=dark*.44 && innerDensity>=outerDensity*1.25;
         celebrate(isInner?'inner':'outer',true);
