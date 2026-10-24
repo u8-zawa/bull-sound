@@ -132,6 +132,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .history{margin-top:12px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
 .history .chip{border:1px solid #a98e69;background:#ead9bb;border-radius:99px;padding:4px 8px;font-weight:700}
 .actions{display:grid;grid-template-columns:1.15fr 1.15fr .9fr;gap:8px;margin:0 0 17px}
+.actions .fs-btn{grid-column:1/-1}
 .btn,.small-btn{cursor:pointer;font-weight:800;border:2px solid var(--ink);background:transparent;color:var(--ink);border-radius:99px;-webkit-tap-highlight-color:transparent}
 .btn{padding:10px 6px;min-height:47px;font-size:12px;line-height:1.3}
 .small-btn{font-size:12px;padding:9px 12px;border-width:1.5px}
@@ -242,7 +243,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
         <button type="button" id="toggleBullBtn" class="small-btn">↔ 直近の内外切替 <kbd class="kbd">T</kbd></button>
         <button type="button" id="endRoundBtn" class="small-btn finish">🏁 3投終了 <kbd class="kbd">Enter</kbd></button>
       </div>
-      <p class="keyboard-help">キーボード：<b>0〜3</b> 結果確定 ／ <b>B</b> アウター追加 ／ <b>I</b> インナー追加 ／ <b>M</b> MISS ／ <b>T</b> 内外切替 ／ <b>Enter</b> 終了・次へ ／ <b>Backspace</b> 戻す</p>
+      <p class="keyboard-help">キーボード：<b>0〜3</b> 結果確定 ／ <b>B</b> アウター追加 ／ <b>I</b> インナー追加 ／ <b>M</b> MISS ／ <b>T</b> 内外切替 ／ <b>Enter</b> 終了・次へ ／ <b>Backspace</b> 戻す ／ <b>F</b> 全画面</p>
       <div class="history" id="roundHistory"><span>結果の履歴がここに表示されます</span></div>
     </section>
   </div>
@@ -251,6 +252,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     <button type="button" class="btn primary" id="cameraBtn">① カメラ起動</button>
     <button type="button" class="btn" id="watchBtn" disabled>② 判定開始</button>
     <button type="button" class="btn" id="soundBtn">🔊 外ブル音</button>
+    <button type="button" class="small-btn fs-btn" id="fullscreenBtn" hidden>⛶ 全画面表示 [F]</button>
   </div>
   <div class="settings">
     <p class="settings-title">判定エリアの設定</p>
@@ -976,6 +978,17 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   $('lowTestBtn').addEventListener('click',()=>playResult('low'));
   $('hatTestBtn').addEventListener('click',()=>playResult('hat'));
   soundBtn.addEventListener('click',()=>{unlockAudio();preloadSamples();celebrate('outer',false);});
+  // Full screen hides the browser UI so the effects fill the monitor (not available on iPhone Safari).
+  const fullscreenBtn=$('fullscreenBtn');
+  fullscreenBtn.hidden=!document.fullscreenEnabled;
+  function toggleFullscreen(){
+    if(!document.fullscreenEnabled)return;
+    (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch(e=>console.warn('Fullscreen unavailable',e));
+  }
+  fullscreenBtn.addEventListener('click',toggleFullscreen);
+  document.addEventListener('fullscreenchange',()=>{
+    fullscreenBtn.textContent=document.fullscreenElement?'⛶ 全画面を終了 [F]':'⛶ 全画面表示 [F]';
+  });
   document.addEventListener('keydown',e=>{
     if(e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;
     const focused=e.target;
@@ -989,6 +1002,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     if(k==='i'||k==='I'){e.preventDefault();unlockAudio();preloadSamples();celebrate('inner',true);return;}
     if(k==='m'||k==='M'){e.preventDefault();markMiss();return;}
     if(k==='t'||k==='T'){e.preventDefault();toggleLastBull();return;}
+    if(k==='f'||k==='F'){e.preventDefault();toggleFullscreen();return;}
   });
   updateRoundUI();
 
