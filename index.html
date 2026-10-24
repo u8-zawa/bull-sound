@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#e7d4b7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700;800&display=swap">
+<title>BULL SOUND v5｜キーボード補正</title>
+<style>
+
+:root{
+  color-scheme:light;
+  --bg:#e7d4b7;--panel:#f5ead8;--ink:#392a1c;--muted:#76624c;
+  --line:rgba(57,42,28,.25);--red:#d32a32;--red-dark:#a31d25;--green:#27784d;
+  --amber:#b87923;--white:#fff8eb;--camera:#161412;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top)}
+body{
+  margin:0; min-height:100dvh; padding-bottom:env(safe-area-inset-bottom);
+  background:var(--bg); color:var(--ink);
+  font:500 14px/1.55 'Zen Kaku Gothic New','Hiragino Sans','Noto Sans JP',sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+button,input,select{font:inherit}
+button{touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.shell{max-width:570px;margin:0 auto;padding:16px 17px 40px}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:1px 0 15px}
+.kicker{font:800 10px/1.3 system-ui,sans-serif;letter-spacing:.19em;color:var(--red);margin:0 0 6px}
+.heading h1{font:400 clamp(21px,5.2vw,29px)/1.18 'Dela Gothic One','Hiragino Sans',sans-serif;letter-spacing:-.035em;margin:0}
+.heading h1 span{color:var(--red)}
+.heading .sub{font-size:11px;color:var(--muted);margin:5px 0 0;font-weight:700}
+.brand-score{flex:none;min-width:84px;text-align:right;border-left:1px solid var(--line);padding-left:15px}
+.brand-score small{display:block;font-size:10px;letter-spacing:.07em;color:var(--muted);font-weight:800}
+.brand-score strong{display:block;margin-top:0;font:400 31px/1.1 'Dela Gothic One',system-ui,sans-serif;color:var(--red);font-variant-numeric:tabular-nums}
+.scene-wrap{position:relative;max-width:480px;margin:0 auto}
+.scene{
+  position:relative;width:100%;aspect-ratio:3/4;max-height:61dvh;
+  overflow:hidden;border:3px solid var(--ink);border-radius:15px;
+  background:var(--camera);box-shadow:0 8px 0 #a88e6e48;
+  touch-action:manipulation;user-select:none;
+}
+.scene video,.scene .demo-photo,.scene canvas{position:absolute;width:100%;height:100%;inset:0}
+.scene video,.scene .demo-photo{object-fit:cover;object-position:center}
+.scene video{display:none}
+.scene canvas{pointer-events:none}
+.scene:after{content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 1px #ffffff1c}
+.scene-top{position:absolute;top:10px;left:10px;right:10px;display:flex;align-items:center;justify-content:space-between;gap:7px;pointer-events:none}
+.pill{display:inline-flex;align-items:center;gap:6px;background:#28231de0;color:#fff7e9;border:1px solid #ffffff67;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap;backdrop-filter:blur(8px)}
+.dot{width:8px;height:8px;border-radius:50%;background:#e9b25e}
+.pill.armed .dot{background:#62dc99;box-shadow:0 0 0 3px #62dc9925}
+.pill.bull .dot{background:#ff6d74;box-shadow:0 0 0 3px #ff6d7425}
+.scene-tip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);max-width:95%;white-space:nowrap;background:#211e19e8;color:#fff6e9;border:1px solid #ffffff55;border-radius:99px;padding:7px 12px;font-size:11px;font-weight:800;pointer-events:none;text-align:center}
+#bullPop{
+ position:absolute;left:50%;top:43%;transform:translate(-50%,-50%) scale(1.7);opacity:0;z-index:4;
+ pointer-events:none;white-space:nowrap;color:#e52731;
+ font:400 clamp(48px,13vw,78px)/1 'Dela Gothic One','Arial Black',sans-serif;
+ -webkit-text-stroke:3px #fffef8;paint-order:stroke fill;
+ text-shadow:0 5px 0 #2c180fa1;letter-spacing:-.05em;
+}
+#bullPop.show{animation:stamp 1.45s cubic-bezier(.2,.9,.3,1.25) both}
+#bullPop.special{font-size:clamp(26px,8vw,48px)}
+#bullPop.low{color:#d32a32}
+#bullPop.one{color:#c53535}
+#bullPop.inner{color:#e32534;text-shadow:0 4px 0 #2c180fa1,0 0 20px #facc56}
+#bullPop.zero{color:#f1eadc;font-size:clamp(28px,8vw,49px)}
+#bullPop.hat{color:#c51f27;text-shadow:0 5px 0 #2c180fa1,0 0 26px #ffd77b}
+@keyframes stamp{0%{opacity:0;transform:translate(-50%,-50%) scale(1.75) rotate(-9deg)}12%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-9deg)}79%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-9deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1) rotate(-9deg)}}
+.stats{display:flex;justify-content:space-between;align-items:center;padding:12px 3px 5px;gap:8px}
+.stat-left{font-size:11px;color:var(--muted);flex:1}
+.stat-head{font-size:11px;letter-spacing:.025em;font-weight:800}
+#detail{display:block;color:var(--ink);font-size:12px;font-weight:800;margin-top:2px;min-height:18px}
+.live-indicator{font:800 10px system-ui,sans-serif;letter-spacing:.15em;color:var(--green);border:1px solid var(--line);padding:5px 8px;border-radius:30px}
+.signal{height:4px;background:#c9b28f;border-radius:99px;overflow:hidden;margin:4px 3px 15px}
+#signalBar{height:100%;width:0;background:linear-gradient(90deg,#c77d26,#d52a32);border-radius:99px;transition:width .18s}
+.round-panel{
+ margin:0 0 12px;background:var(--panel);
+ border:2px solid var(--ink);border-radius:16px;padding:13px 14px 12px;
+ box-shadow:4px 4px 0 #b99e7a45;
+}
+.round-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.round-id{font:400 16px 'Dela Gothic One','Hiragino Sans',sans-serif}
+.round-current{color:var(--red);font-size:12px;font-weight:900}
+.dart-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 10px}
+.dart-slot{border:1.5px dashed #a68f70;border-radius:9px;padding:9px 4px;text-align:center;font-size:11px;font-weight:800;color:var(--muted);background:#eee0c8;min-width:0;white-space:nowrap}
+.dart-slot.bull{border:1.5px solid var(--red);background:#ffddd5;color:var(--red)}
+.dart-slot.inner{border-color:#bb6017;background:#ffe4b9;color:#86430d}
+.dart-slot.miss{border:1.5px solid #87745c;background:#e2d3bd;color:var(--ink)}
+.round-bottom{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:11px;color:var(--muted)}
+.round-result{font-size:13px;font-weight:900;color:var(--red);text-align:right;min-height:20px}
+.round-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 3px}
+.round-actions .small-btn{padding:9px 5px}
+.round-actions .small-btn.finish{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.round-actions .small-btn:disabled{opacity:.4;cursor:not-allowed}
+.quick-panel{background:#ead5b4;border:1.5px solid #bea17c;border-radius:12px;padding:10px;margin:12px 0 9px}
+.quick-head{display:flex;justify-content:space-between;align-items:center;gap:7px;margin-bottom:8px}
+.quick-head strong{font-size:12px;letter-spacing:.02em}
+.quick-head span{font-size:10px;color:var(--muted);font-weight:700;text-align:right}
+.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.quick-key{background:var(--panel);color:var(--ink);border:1.5px solid #937859;border-radius:10px;min-height:70px;padding:6px 2px;cursor:pointer;text-align:center;font-size:10px;font-weight:700;line-height:1.35}
+.quick-key:hover{border-color:var(--red);background:#fff4e4}
+.quick-key:active{transform:translateY(1px)}
+.quick-key kbd{display:block;width:23px;height:23px;margin:0 auto 5px;border-radius:6px;background:var(--ink);color:var(--white);font:800 14px/23px system-ui,sans-serif}
+.quick-key b{display:block;font-size:10px;white-space:nowrap}
+.quick-key small{display:block;font-size:9px;color:var(--muted)}
+.quick-key.hot{border-color:var(--red);color:var(--red)}
+.quick-foot{font-size:10px;line-height:1.65;color:var(--muted);margin:8px 2px 0}
+.round-more{display:grid;grid-template-columns:1fr 1.25fr;gap:7px;margin:7px 0 3px}
+.round-more .small-btn{padding:10px 6px}
+.kbd{display:inline-block;background:var(--ink);color:var(--white);font:800 10px/1.2 system-ui,sans-serif;border-radius:4px;padding:3px 5px;min-width:17px;text-align:center;vertical-align:baseline;margin-left:2px}
+.keyboard-help{font-size:10px;color:var(--muted);margin:9px 0 3px;line-height:1.9}
+.sound-test-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.sound-test-grid .small-btn{font-size:11px}
+.sound-legend{font-size:11px;color:var(--muted);line-height:1.6;margin:4px 0 5px}
+.history{margin-top:12px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+.history .chip{border:1px solid #a98e69;background:#ead9bb;border-radius:99px;padding:4px 8px;font-weight:700}
+.actions{display:grid;grid-template-columns:1.15fr 1.15fr .9fr;gap:8px;margin:0 0 17px}
+.btn,.small-btn{cursor:pointer;font-weight:800;border:2px solid var(--ink);background:transparent;color:var(--ink);border-radius:99px;-webkit-tap-highlight-color:transparent}
+.btn{padding:10px 6px;min-height:47px;font-size:12px;line-height:1.3}
+.small-btn{font-size:12px;padding:9px 12px;border-width:1.5px}
+.btn:active,.small-btn:active,.size-step:active{transform:translateY(1px)}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.active{background:var(--green);border-color:var(--green);color:#fff}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.settings{background:var(--panel);border-top:3px solid var(--ink);padding:17px 14px 15px;border-radius:0 0 12px 12px;margin-bottom:14px}
+.settings-title{font:400 16px 'Dela Gothic One','Hiragino Sans',sans-serif;margin:0 0 12px}
+.field{display:flex;align-items:center;justify-content:space-between;gap:13px;margin:14px 0 6px}
+.field label{font-size:13px;font-weight:800}
+.value{font-size:12px;font-weight:800;color:var(--red);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--red);cursor:pointer;height:26px;margin:0;touch-action:pan-x}
+.size-controls{display:flex;align-items:center;gap:8px;margin-top:3px}
+.size-controls input[type=range]{flex:1;min-width:0}
+.size-step{flex:none;width:38px;height:38px;background:transparent;color:var(--ink);border:2px solid var(--ink);border-radius:100%;font-size:22px;font-weight:900;cursor:pointer;line-height:1}
+.size-fine{display:flex;align-items:center;gap:7px;margin:8px 0 4px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.size-fine input{width:60px;min-width:0;border:1.5px solid var(--ink);border-radius:6px;background:var(--white);color:var(--ink);padding:5px 7px;text-align:center;font-weight:700;font-size:13px}
+.size-fine .size-unit{margin-left:-3px}
+.size-fine #sizePxHint{margin-left:auto;font-size:11px}
+.secondary{display:flex;align-items:center;gap:9px;margin-top:12px;flex-wrap:wrap}
+select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);border-radius:8px;padding:7px 9px;font-size:12px;max-width:100%}
+.toggleline{display:flex;align-items:center;gap:9px;margin:12px 0 0;font-size:12px;font-weight:700;line-height:1.6}
+.toggleline input{width:18px;height:18px;accent-color:var(--red);flex:none}
+.subtle{color:var(--muted);font-size:11px;margin:9px 0 0;line-height:1.7}
+.instructions{border-top:1px solid var(--line);padding:13px 4px;font-size:12px;line-height:1.8;color:var(--muted)}
+.instructions strong{color:var(--ink)}
+.instructions p{margin:0 0 7px}
+.instructions p:last-child{margin-bottom:0}
+.notice{font-size:11px;color:var(--red-dark);margin-top:7px}
+#toast{display:none;margin:0 0 10px;border:1px solid var(--red);background:#ffe0d0;color:#8c1c20;border-radius:9px;padding:10px 12px;font-size:12px;white-space:pre-wrap;word-break:break-word}
+#toast.show{display:block}
+@media(min-width:600px){.shell{padding-top:26px}.scene{max-height:580px}}
+@media(max-width:375px){.shell{padding:13px 12px 24px}.heading h1{font-size:22px}.brand-score{min-width:70px;padding-left:9px}.brand-score strong{font-size:27px}.actions{gap:5px}.btn{font-size:11px;padding:9px 4px}.dart-slot{font-size:10px}}
+@media(prefers-reduced-motion:reduce){#bullPop.show{animation:fade-stamp 1.4s linear both}@keyframes fade-stamp{0%{opacity:1;transform:translate(-50%,-50%)}80%{opacity:1}100%{opacity:0}}}
+@media(prefers-color-scheme:dark){
+ :root{color-scheme:dark;--bg:#241b12;--panel:#30251a;--ink:#f0e2c9;--muted:#bea886;--line:#f0e2c93d;--red:#f0464d;--red-dark:#ffb1a3;--green:#5cc68b;--amber:#e3a548;--white:#f6ead7;--camera:#100e0b}
+ .scene{border-color:#c8ac88;box-shadow:0 8px 0 #0000003d}
+ .round-panel{border-color:#c8ac88;box-shadow:4px 4px 0 #00000020}
+ .dart-slot{background:#372a20;border-color:#9b8062}.dart-slot.bull{background:#53282a}.dart-slot.inner{background:#604122;color:#ffe4ad}.dart-slot.miss{background:#43362a}
+ .quick-panel{background:#382c1e;border-color:#816749}
+ .quick-key{background:#2f261e;border-color:#816749}
+ .quick-key:hover{background:#4a3829}
+ .history .chip{background:#4a3928;border-color:#806a4d}
+ .round-actions .small-btn.finish{background:#e5d0ad;color:#2b1d14;border-color:#e5d0ad}
+ .btn.primary{color:#fff}
+ .size-fine input,select{background:#241b12;color:#f0e2c9}
+ #toast{background:#5c2629;color:#ffdfc9}
+}
+
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="heading">
+    <div>
+      <p class="kicker">BULL SOUND</p>
+      <h1>ブル判定<span>カメラ</span></h1>
+      <p class="sub">効果音 × 3投判定 × かんたん補正。</p>
+    </div>
+    <div class="brand-score" aria-label="ブル合計"><small>BULL TOTAL</small><strong id="bullCount">0</strong></div>
+  </header>
+  <div class="scene-wrap">
+    <div id="scene" class="scene" aria-label="ダーツの的を映すカメラ映像。タップでブルの中心を調整">
+      <img id="demoImage" class="demo-photo" alt="ダンボールの的を模したサンプル画像" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MjAiIGhlaWdodD0iOTYwIiB2aWV3Qm94PSIwIDAgNzIwIDk2MCI+CjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iYm9hcmQiIHgxPSIwIiB4Mj0iLjc1IiB5MT0iMCIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNkNmJkOTEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiNDhkNTkiLz48L2xpbmVhckdyYWRpZW50PjxwYXR0ZXJuIGlkPSJncmFpbiIgd2lkdGg9IjEzIiBoZWlnaHQ9IjEzIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMiAyaDEgTTkgN2gyIiBzdHJva2U9IiM4NjZhNDYiIHN0cm9rZS13aWR0aD0iLjgiIG9wYWNpdHk9Ii4yNSIvPjwvcGF0dGVybj48L2RlZnM+CjxyZWN0IHdpZHRoPSI3MjAiIGhlaWdodD0iOTYwIiBmaWxsPSIjNDAzZTNkIi8+CjxwYXRoIGQ9Ik0yOSAyMEw2OTAgMjggNjgyIDkzNyAzNCA5NDBaIiBmaWxsPSJ1cmwoI2JvYXJkKSIgc3Ryb2tlPSIjODI2MzQyIiBzdHJva2Utd2lkdGg9IjciLz4KPHBhdGggZD0iTTI5IDIwTDY5MCAyOCA2ODIgOTM3IDM0IDk0MFoiIGZpbGw9InVybCgjZ3JhaW4pIiBvcGFjaXR5PSIuNyIvPgo8cGF0aCBkPSJNMzMgMTQxIDY4NyAxNTMgNjg2IDIxNCAzMyAyMDRaIiBmaWxsPSIjZTJjZmFhIiBvcGFjaXR5PSIuNzUiLz4KPHBhdGggZD0iTTM2IDc5MCA2ODMgNzk1IDY4MSA4NDIgMzUgODMzWiIgZmlsbD0iI2VhZDZiNSIgb3BhY2l0eT0iLjYyIi8+CjxwYXRoIGQ9Ik0yMTAgMjkgMjY3IDI5IDI3MCA5MzcgMjA2IDkzOFoiIGZpbGw9IiNlOWNmYTciIG9wYWNpdHk9Ii4zMiIvPgo8ZyBmaWxsPSIjNmY1NTM4IiBvcGFjaXR5PSIuMzQiPjxjaXJjbGUgY3g9IjExNSIgY3k9IjI3MiIgcj0iMy40Ii8+PGNpcmNsZSBjeD0iMTI4IiBjeT0iNDkwIiByPSIyIi8+PGNpcmNsZSBjeD0iNTMzIiBjeT0iMjM0IiByPSIzIi8+PGNpcmNsZSBjeD0iNDU1IiBjeT0iNTg4IiByPSIzLjQiLz48Y2lyY2xlIGN4PSI5NCIgY3k9Ijc3OSIgcj0iMiIvPjxjaXJjbGUgY3g9IjU4NSIgY3k9IjcxNSIgcj0iMi42Ii8+PGNpcmNsZSBjeD0iNDg0IiBjeT0iODc0IiByPSIyIi8+PGNpcmNsZSBjeD0iMzQxIiBjeT0iODUwIiByPSIzIi8+PC9nPgo8ZyBmaWxsPSJub25lIiBzdHJva2U9IiMzMDJhMjYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cGF0aCBkPSJNMzY5IDY4NCAzOTIgNjg1Ii8+PHBhdGggZD0iTTM4MCA2NzAgMzgxIDY5NiIvPjwvZz4KPHRleHQgeD0iMzYwIiB5PSIzNjUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjM1IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzYxNGYzNyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+REFSVFMgVEFSR0VUPC90ZXh0Pgo8dGV4dCB4PSIzNjAiIHk9IjQwMSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTciIGZpbGw9IiM2MTRmMzciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNBTUVSQSBQUkVWSUVXPC90ZXh0Pgo8L3N2Zz4=">
+      <video id="camera" autoplay muted playsinline webkit-playsinline></video>
+      <canvas id="overlay" aria-hidden="true"></canvas>
+      <div class="scene-top"><span id="pill" class="pill"><span class="dot"></span><span id="badgeText">サンプル画面</span></span><span class="pill">📱 本体から音</span></div>
+      <div id="bullPop">BULL!</div>
+      <span id="sceneTip" class="scene-tip">赤い円はタップで動かせます</span>
+    </div>
+    <div class="stats">
+      <div class="stat-left"><span class="stat-head">● カメラ差分センサー</span><span id="detail">サンプル画面 / カメラを起動してください</span></div>
+      <span class="live-indicator">LIVE / LOCAL</span>
+    </div>
+    <div class="signal"><div id="signalBar"></div></div>
+    <section class="round-panel" aria-label="3投ラウンドの記録" aria-live="polite">
+      <div class="round-top"><span id="roundTitle" class="round-id">ROUND 1</span><span id="roundCurrent" class="round-current">0 / 3 BULL</span></div>
+      <div class="dart-slots" id="dartSlots"><span class="dart-slot">1投目 · —</span><span class="dart-slot">2投目 · —</span><span class="dart-slot">3投目 · —</span></div>
+      <div class="round-bottom"><span>3本で1ラウンド（イン/アウト両方1本）</span><span id="roundResult" class="round-result">投球待ち 🎯</span></div>
+      <section class="quick-panel" aria-label="3投の結果を一発確定">
+        <div class="quick-head"><strong>3本投げたら、数字で確定</strong><span>自動判定と違っても上書き</span></div>
+        <div class="quick-grid">
+          <button type="button" class="quick-key" data-quick="0"><kbd>0</kbd><b>0 BULL</b><small>全部MISS</small></button>
+          <button type="button" class="quick-key hot" data-quick="1"><kbd>1</kbd><b>ONE BULL</b><small>1本</small></button>
+          <button type="button" class="quick-key hot" data-quick="2"><kbd>2</kbd><b>LOW TON</b><small>2本</small></button>
+          <button type="button" class="quick-key hot" data-quick="3"><kbd>3</kbd><b>HAT TRICK</b><small>3本</small></button>
+        </div>
+        <p class="quick-foot">押すとその本数で確定し、演出後に自動で次のラウンドへ。<strong>0キーで全MISSも一発処理</strong>できます。</p>
+      </section>
+      <div class="round-actions">
+        <button type="button" id="addBullBtn" class="small-btn" title="アウターブルを1本追加">＋ OUTER <kbd class="kbd">B</kbd></button>
+        <button type="button" id="addInnerBtn" class="small-btn" title="インブルを1本追加">＋ INNER <kbd class="kbd">I</kbd></button>
+        <button type="button" id="missBtn" class="small-btn" title="MISSを1本追加">＋ MISS <kbd class="kbd">M</kbd></button>
+        <button type="button" id="undoBtn" class="small-btn" title="直前の記録を取り消す">↶ 戻す <kbd class="kbd">⌫</kbd></button>
+      </div>
+      <div class="round-more">
+        <button type="button" id="toggleBullBtn" class="small-btn">↔ 直近の内外切替 <kbd class="kbd">T</kbd></button>
+        <button type="button" id="endRoundBtn" class="small-btn finish">🏁 3投終了 <kbd class="kbd">Enter</kbd></button>
+      </div>
+      <p class="keyboard-help">キーボード：<b>0〜3</b> 結果確定 ／ <b>B</b> アウター追加 ／ <b>I</b> インナー追加 ／ <b>M</b> MISS ／ <b>T</b> 内外切替 ／ <b>Enter</b> 終了・次へ ／ <b>Backspace</b> 戻す</p>
+      <div class="history" id="roundHistory"><span>結果の履歴がここに表示されます</span></div>
+    </section>
+  </div>
+  <div id="toast" role="status"></div>
+  <div class="actions">
+    <button type="button" class="btn primary" id="cameraBtn">① カメラ起動</button>
+    <button type="button" class="btn" id="watchBtn" disabled>② 判定開始</button>
+    <button type="button" class="btn" id="soundBtn">🔊 外ブル音</button>
+  </div>
+  <div class="settings">
+    <p class="settings-title">判定エリアの設定</p>
+    <div class="field"><label for="sizeRange">ブルの円の大きさ</label><span id="sizeLabel" class="value">4%</span></div>
+    <div class="size-controls">
+      <button id="sizeMinus" class="size-step" type="button" aria-label="ブルの円を0.5%小さく">−</button>
+      <input id="sizeRange" type="range" min="1" max="35" step="0.5" value="4" aria-label="ブルの円の直径">
+      <button id="sizePlus" class="size-step" type="button" aria-label="ブルの円を0.5%大きく">＋</button>
+    </div>
+    <div class="size-fine">
+      <label for="sizeNumber">数値で指定</label><input id="sizeNumber" type="number" inputmode="decimal" min="1" max="35" step="0.5" value="4"><span class="size-unit">%</span>
+      <span id="sizePxHint">映像上の直径 約16px</span>
+    </div>
+    <div class="field"><label for="sensRange">検出感度</label><span id="sensLabel" class="value">3 / 5</span></div>
+    <input id="sensRange" type="range" min="1" max="5" step="1" value="3" aria-label="検出感度">
+    <div class="secondary">
+      <button id="resetBtn" type="button" class="small-btn">↻ 背景を再登録</button>
+      <label for="soundStyle" style="font-size:12px;color:var(--muted)">効果音</label>
+      <select id="soundStyle" aria-label="効果音の種類"><option value="impact">合成インパクト（v4）</option><option value="arcade">アーケード（v3）</option><option value="bell">ベル</option><option value="sample">手元の音声ファイル</option></select>
+    </div>
+    <div class="sound-test-grid"><button id="outerTestBtn" type="button" class="small-btn">🔊 OUTER 音を試聴</button><button id="innerTestBtn" type="button" class="small-btn">🔊 INNER 音を試聴</button></div>
+    <div class="sound-test-grid"><button id="outerFileBtn" type="button" class="small-btn">📁 OUTER 音を選ぶ</button><button id="innerFileBtn" type="button" class="small-btn">📁 INNER 音を選ぶ</button><button id="clearSampleBtn" type="button" class="small-btn">解除</button></div>
+    <input id="outerFile" type="file" accept="audio/*" hidden><input id="innerFile" type="file" accept="audio/*" hidden>
+    <p class="subtle">手元の音声ファイル（1MB以下）を選ぶと、BULL時にその音を鳴らします。ファイルはこの端末のブラウザ内にだけ保存され、送信されません。<br><span id="sampleStatus"></span></p>
+    <label class="toggleline"><input id="voiceEnabled" type="checkbox" checked> ラウンド結果の英語読み上げ（ONE BULL など）</label>
+    <label class="toggleline"><input id="autoInner" type="checkbox" checked> インブルを画像から自動推定（β版）</label>
+    <p class="sound-legend">赤い外円＝アウターブル、内側の細い円＝インブルの目安。自動判定の精度はカメラ角度に依存します。誤った場合は <strong>T</strong> で最後のBULLの内外を切り替えられます。</p>
+    <label class="toggleline"><input id="autoRound" type="checkbox" checked> 矢の回収動作からラウンド終了を自動推定（β版）</label>
+    <div class="secondary"><span style="font-size:12px;color:var(--muted)">演出テスト：</span><button id="oneTestBtn" class="small-btn" type="button">ONE BULL</button><button id="lowTestBtn" class="small-btn" type="button">LOW TON</button><button id="hatTestBtn" class="small-btn" type="button">HAT TRICK</button></div>
+    <p class="subtle">ブルの大きさは1〜35%で調整できます。赤い円の位置と設定はこの端末に保存されます。小さいブルは矢の影や軸で誤判定する場合があります。カメラを固定し、矢を回収するときは的付近に手が映るようにしてください。</p>
+  </div>
+  <div class="instructions">
+    <p><strong>使い方：</strong> カメラを固定 → カメラ起動 → ブル位置とサイズを調整 → 判定開始 → 3投を投げます。BULLは自動記録されます。</p>
+    <p><strong>3投後の確定は数字キーだけ：</strong> <strong>0</strong>＝3本全部外れ、<strong>1</strong>＝ONE BULL、<strong>2</strong>＝LOW TON、<strong>3</strong>＝HAT TRICK。自動検出の本数を上書きし、演出後に次のラウンドへ進みます。<strong>B</strong> アウター / <strong>I</strong> インナーの手動追加も可能です。<strong>Enter</strong> は現状の判定で終了（終了後は次へ）。</p>
+    <p><strong>判定について：</strong> 従来v3/v4の画像差分エンジンを使っています。INNER/OUTERの区別は追加した推定で、矢先の追跡ではありません。<strong>MISSは自動判定できないので、3投後は数字キーで結果を確定するのがおすすめです。</strong>カメラ・照明を固定してください。</p>
+    <p><strong>音源：</strong> 標準は合成音です。設定の「OUTER 音を選ぶ」「INNER 音を選ぶ」から手元の音声ファイルも使えます。カメラ映像・画像は送信／保存しません。設定と選んだ音声ファイルは端末内にだけ保存します。</p>
+    <p class="notice">※ スマホのカメラ利用にはブラウザでの許可と HTTPS のページが必要です。端末で HTML ファイルを直接開いただけではカメラが利用できない場合があります。</p>
+  </div>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const scene = $('scene'), video = $('camera'), demoImage = $('demoImage'), canvas = $('overlay');
+  const octx = canvas.getContext('2d');
+  const scratch = document.createElement('canvas');
+  const sctx = scratch.getContext('2d', { willReadFrequently: true });
+  const cameraBtn=$('cameraBtn'), watchBtn=$('watchBtn'), soundBtn=$('soundBtn');
+  const sizeRange=$('sizeRange'), sizeNumber=$('sizeNumber'), sizeMinus=$('sizeMinus'), sizePlus=$('sizePlus'), sizePxHint=$('sizePxHint');
+  const sensRange=$('sensRange'), resetBtn=$('resetBtn'), soundStyle=$('soundStyle'), voiceEnabled=$('voiceEnabled');
+  const sizeLabel=$('sizeLabel'), sensLabel=$('sensLabel'), badgeText=$('badgeText'), detail=$('detail');
+  const pill=$('pill'), sceneTip=$('sceneTip'), signalBar=$('signalBar'), bullCountEl=$('bullCount');
+  const toast=$('toast'), bullPop=$('bullPop');
+  const roundTitle=$('roundTitle'),roundCurrent=$('roundCurrent'),roundResult=$('roundResult');
+  const dartSlots=$('dartSlots'),roundHistory=$('roundHistory');
+  const addBullBtn=$('addBullBtn'),addInnerBtn=$('addInnerBtn'),missBtn=$('missBtn'),undoBtn=$('undoBtn'),endRoundBtn=$('endRoundBtn'),toggleBullBtn=$('toggleBullBtn'),autoRound=$('autoRound'),autoInner=$('autoInner');
+  let stream=null, watching=false, audioCtx=null;
+  const PREF_KEY='bullsound:v5:prefs';
+  let savedTarget=false;
+  const loadPrefs=()=>{
+    try{
+      const now=localStorage.getItem(PREF_KEY);
+      if(now)return JSON.parse(now);
+      // Keep bull placement, sensitivity and sound from v4.
+      return JSON.parse(localStorage.getItem('bullsound:v4:prefs')||'{}');
+    }catch(e){return {}}
+  };
+  const savedPrefs=loadPrefs();
+  let target={x:.53,y:.715,size:4}, count=0;
+  if(typeof savedPrefs.size==='number'&&savedPrefs.size>=1&&savedPrefs.size<=35)target.size=savedPrefs.size;
+  if(savedPrefs.savedTarget===true&&typeof savedPrefs.x==='number'&&typeof savedPrefs.y==='number'){
+    target.x=Math.max(.06,Math.min(.94,savedPrefs.x));
+    target.y=Math.max(.06,Math.min(.94,savedPrefs.y));savedTarget=true;
+  }
+  const savePrefs=()=>{
+    try{localStorage.setItem(PREF_KEY,JSON.stringify({x:target.x,y:target.y,savedTarget,size:target.size,
+      sens:Number(sensRange.value),sound:soundStyle.value,voice:voiceEnabled.checked,auto:autoRound.checked,autoInner:autoInner.checked}))}catch(e){}
+  };
+  if([1,2,3,4,5].includes(savedPrefs.sens))sensRange.value=String(savedPrefs.sens);
+  if(['sample','impact','arcade','bell'].includes(savedPrefs.sound))soundStyle.value=savedPrefs.sound;
+  if(typeof savedPrefs.voice==='boolean')voiceEnabled.checked=savedPrefs.voice;
+  if(typeof savedPrefs.auto==='boolean')autoRound.checked=savedPrefs.auto;
+  if(typeof savedPrefs.autoInner==='boolean')autoInner.checked=savedPrefs.autoInner;
+  let roundNo=1,shots=[],roundLocked=false,roundFinalizedAt=0,roundStartedAt=performance.now();
+  const roundLog=[];
+  let resultTimer=null,autoNextTimer=null,roundRevision=0,roundAdvanceAfter=0;
+  let retrievalActive=false,retrievalLastMotion=0,retrievalMotionStreak=0,previousMotionFrame=null,postRetrieve=false,stableSince=0;
+  let base=null, lastFrame=null, baselineReadyAt=0;
+  let holdAt=0, cooldownUntil=0, globalMoveAt=0;
+  let flashAt=0, lastProcess=0, lastDetailAt=0, loopId=0;
+  const PROCESS_MS=120, HOLD_MS=610, COOLDOWN_MS=1350;
+  const densities=[0,.085,.060,.036,.023,.013];
+  const diffs=[0,43,35,29,23,17];
+  const SW=480;
+
+  function clearError(){toast.classList.remove('show');toast.textContent='';}
+  function showError(message){toast.textContent=message;toast.classList.add('show');}
+  function setState(text, state=''){
+    badgeText.textContent=text;
+    pill.className='pill'+(state?' '+state:'');
+  }
+  function resizeCanvas(){
+    const rect=scene.getBoundingClientRect(), dpr=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);
+    octx.setTransform(dpr,0,0,dpr,0,0);
+    let h=Math.round(SW*rect.height/rect.width);
+    scratch.width=SW;scratch.height=h;
+    invalidateBase(false);
+    drawOverlay();
+    updateSizeReadout();
+  }
+  function effectiveRadius(w,h){return target.size/200 * Math.min(w,h);}
+  function sizeText(size){return Number.isInteger(size)?String(size):size.toFixed(1);}
+  function updateSizeReadout(){
+    const s=sizeText(target.size);
+    sizeRange.value=s;
+    sizeNumber.value=s;
+    sizeLabel.textContent=s+'%';
+    sizePxHint.textContent='映像上の直径 約'+Math.round(effectiveRadius(scene.clientWidth,scene.clientHeight)*2)+'px';
+  }
+  function setBullSize(value){
+    const n=Number(value);
+    if(!Number.isFinite(n))return;
+    target.size=Math.min(35,Math.max(1,Math.round(n*2)/2));
+    updateSizeReadout();
+    invalidateBase(true);
+    savePrefs();
+    drawOverlay();
+  }
+  function drawOverlay(){
+    const w=scene.clientWidth,h=scene.clientHeight;
+    octx.clearRect(0,0,w,h);
+    const x=target.x*w,y=target.y*h,r=effectiveRadius(w,h);
+    const hot=performance.now()-flashAt<620;
+    octx.save();
+    octx.shadowColor=hot?'#ffc76f':'#e51e30';octx.shadowBlur=hot?24:5;
+    octx.lineWidth=r<8?4:5;
+    octx.strokeStyle='rgba(255,255,255,.88)';
+    octx.beginPath();octx.arc(x,y,r,0,Math.PI*2);octx.stroke();
+    octx.shadowBlur=0;
+    octx.lineWidth=r<8?2:2.7;
+    octx.strokeStyle=hot?'#ffb736':'#e42c36';
+    octx.beginPath();octx.arc(x,y,r,0,Math.PI*2);octx.stroke();
+    // Inner ring is a visual guide; the hit area of v3 remains unchanged.
+    octx.strokeStyle=hot?'#fff2bb':'#ffbe63';octx.lineWidth=Math.max(1.4,Math.min(2.4,r*.23));
+    octx.beginPath();octx.arc(x,y,Math.max(1.2,r*.5),0,Math.PI*2);octx.stroke();
+    octx.strokeStyle=hot?'#ffb736':'#e42c36';octx.lineWidth=1.3;
+    const cross=Math.max(5,Math.min(9,r*.7));
+    octx.beginPath();octx.moveTo(x-cross,y);octx.lineTo(x+cross,y);
+    octx.moveTo(x,y-cross);octx.lineTo(x,y+cross);octx.stroke();
+    octx.restore();
+  }
+  function invalidateBase(restart=true){
+    base=null;holdAt=0;globalMoveAt=0;previousMotionFrame=null;
+    retrievalMotionStreak=0;signalBar.style.width='0%';
+    if(restart&&watching&&stream){
+      baselineReadyAt=performance.now()+850;
+      setState('背景記録中','');
+      detail.textContent='的を動かさずにお待ちください';
+    }
+  }
+  function setTargetFromPointer(e){
+    if(e.target.closest && e.target.closest('button')) return;
+    const rect=scene.getBoundingClientRect();
+    target.x=Math.max(.06,Math.min(.94,(e.clientX-rect.left)/rect.width));
+    target.y=Math.max(.06,Math.min(.94,(e.clientY-rect.top)/rect.height));
+    if(stream)savedTarget=true;
+    invalidateBase(true);drawOverlay();savePrefs();
+    if(!stream){detail.textContent='位置を調整しました / カメラを起動してください';}
+  }
+  scene.addEventListener('pointerdown',setTargetFromPointer);
+  sizeRange.addEventListener('input',()=>setBullSize(sizeRange.value));
+  sizeNumber.addEventListener('change',()=>setBullSize(sizeNumber.value));
+  sizeMinus.addEventListener('click',()=>setBullSize(target.size-.5));
+  sizePlus.addEventListener('click',()=>setBullSize(target.size+.5));
+  sensRange.addEventListener('input',()=>{sensLabel.textContent=sensRange.value+' / 5';holdAt=0;savePrefs();});
+  soundStyle.addEventListener('change',savePrefs);
+  voiceEnabled.addEventListener('change',savePrefs);
+  autoRound.addEventListener('change',savePrefs);
+  autoInner.addEventListener('change',savePrefs);
+  sensLabel.textContent=sensRange.value+' / 5';
+  resetBtn.addEventListener('click',()=>{
+    invalidateBase(true);
+    if(!stream)detail.textContent='カメラを起動すると背景を記録できます';
+  });
+
+  // User-selected sound files, kept only in this browser. Decode to WebAudio for low-latency playback.
+  // If decoding is still running, play the same file through an Audio element.
+  const SAMPLE_KEY='bullsound:v5:sample:';
+  const sampleUrls={outer:null,inner:null};
+  try{for(const type of ['outer','inner'])sampleUrls[type]=localStorage.getItem(SAMPLE_KEY+type);}catch(e){}
+  const sampleBuffers={outer:null,inner:null};
+  let samplePromise=null;
+  function preloadSamples(){
+    if(!unlockAudio())return;
+    if(samplePromise)return samplePromise;
+    samplePromise=Promise.all(['outer','inner'].filter(type=>sampleUrls[type]).map(async type=>{
+      const url=sampleUrls[type],bin=atob(url.slice(url.indexOf(',')+1));
+      const bytes=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+      const buffer=await audioCtx.decodeAudioData(bytes.buffer);
+      if(sampleUrls[type]===url)sampleBuffers[type]=buffer;
+    })).catch(e=>{console.warn('Sound decoding failed; HTMLAudio fallback will be used',e);showError('音声ファイルを読み込めませんでした。別のファイルを選び直してください。');});
+    return samplePromise;
+  }
+  function playSample(type){
+    if(!unlockAudio())return;
+    if(!sampleUrls[type])type='outer'; // INNER falls back to the OUTER file
+    if(!sampleUrls[type]){playSynthBull();return;}
+    if(sampleBuffers[type]){
+      const source=audioCtx.createBufferSource();source.buffer=sampleBuffers[type];
+      const gain=audioCtx.createGain();gain.gain.value=.93;
+      source.connect(gain);gain.connect(audioCtx.destination);
+      source.start(0);
+    }else{
+      // Still use exactly the selected file even if the buffer has not finished loading.
+      const audio=new Audio(sampleUrls[type]);
+      audio.volume=.9;audio.play().catch(e=>console.warn('Sound playback denied',e));
+      preloadSamples();
+    }
+  }
+
+  const sampleStatus=$('sampleStatus');
+  function updateSampleStatus(){
+    sampleStatus.textContent='OUTER：'+(sampleUrls.outer?'設定済み':'未設定（合成音）')+' ／ INNER：'+(sampleUrls.inner?'設定済み':sampleUrls.outer?'OUTERと同じ音':'未設定（合成音）');
+  }
+  function setSampleFile(type,input){
+    const file=input.files[0];input.value='';
+    if(!file)return;
+    if(file.size>1024*1024){showError('音声ファイルは1MB以下にしてください。');return;}
+    const reader=new FileReader();
+    reader.onload=()=>{
+      clearError();
+      sampleUrls[type]=reader.result;sampleBuffers[type]=null;samplePromise=null;
+      try{localStorage.setItem(SAMPLE_KEY+type,reader.result);}
+      catch(e){showError('音声ファイルを端末に保存できませんでした。このページを開いている間だけ使えます。');}
+      soundStyle.value='sample';savePrefs();updateSampleStatus();
+    };
+    reader.readAsDataURL(file);
+  }
+  for(const type of ['outer','inner']){
+    const input=$(type+'File');
+    $(type+'FileBtn').addEventListener('click',()=>input.click());
+    input.addEventListener('change',()=>setSampleFile(type,input));
+  }
+  $('clearSampleBtn').addEventListener('click',()=>{
+    for(const type of ['outer','inner']){
+      sampleUrls[type]=null;sampleBuffers[type]=null;
+      try{localStorage.removeItem(SAMPLE_KEY+type);}catch(e){}
+    }
+    samplePromise=null;
+    if(soundStyle.value==='sample'){soundStyle.value='impact';savePrefs();}
+    updateSampleStatus();
+  });
+  updateSampleStatus();
+
+  // v4 sound: layers adapted from the supplied warm-red Claude prototype;
+  // the camera detection engine below remains the tested v3 implementation.
+  let master=null, echo=null, noiseBuffer=null;
+  function unlockAudio(){
+    try{
+      const AudioCtor=window.AudioContext||window.webkitAudioContext;
+      if(!AudioCtor)return false;
+      if(!audioCtx){
+        if('audioSession' in navigator){try{navigator.audioSession.type='playback';}catch(e){}}
+        audioCtx=new AudioCtor();
+        const comp=audioCtx.createDynamicsCompressor();
+        comp.threshold.value=-12;comp.knee.value=6;comp.ratio.value=5;
+        comp.attack.value=.002;comp.release.value=.2;
+        master=audioCtx.createGain();master.gain.value=.76;
+        master.connect(comp);comp.connect(audioCtx.destination);
+        echo=audioCtx.createDelay(1);echo.delayTime.value=.13;
+        const fb=audioCtx.createGain();fb.gain.value=.38;
+        const wet=audioCtx.createGain();wet.gain.value=.38;
+        echo.connect(fb);fb.connect(echo);echo.connect(wet);wet.connect(master);
+        noiseBuffer=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*.4),audioCtx.sampleRate);
+        const ch=noiseBuffer.getChannelData(0);
+        for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
+      }
+      if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+      return true;
+    }catch(e){console.warn('Audio unavailable',e);return false;}
+  }
+  function envelope(param,t,attack,peak,duration){
+    param.setValueAtTime(.0001,t);
+    param.exponentialRampToValueAtTime(peak,t+attack);
+    param.exponentialRampToValueAtTime(.0001,t+duration);
+  }
+  function oscSound(type,f,t,duration,peak,toEcho=false){
+    const o=audioCtx.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);
+    const g=audioCtx.createGain();envelope(g.gain,t,.005,peak,duration);
+    o.connect(g);g.connect(master);if(toEcho)g.connect(echo);
+    o.start(t);o.stop(t+duration+.05);
+    return o;
+  }
+  function shimmer(f,t,duration,peak){
+    const o=audioCtx.createOscillator();o.type='triangle';o.frequency.value=f;
+    const lfo=audioCtx.createOscillator();lfo.frequency.value=6;
+    const lg=audioCtx.createGain();lg.gain.value=12;lfo.connect(lg);lg.connect(o.detune);
+    const g=audioCtx.createGain();envelope(g.gain,t,.04,peak,duration);
+    o.connect(g);g.connect(master);g.connect(echo);
+    o.start(t);lfo.start(t);o.stop(t+duration+.05);lfo.stop(t+duration+.05);
+  }
+  function brass(f,t,duration,peak){
+    for(const det of [-7,7]){
+      const o=audioCtx.createOscillator();o.type='sawtooth';o.frequency.value=f;o.detune.value=det;
+      const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.Q.value=2;
+      lp.frequency.setValueAtTime(600,t);lp.frequency.exponentialRampToValueAtTime(3200,t+.06);
+      const g=audioCtx.createGain();envelope(g.gain,t,.02,peak,duration);
+      o.connect(lp);lp.connect(g);g.connect(master);g.connect(echo);
+      o.start(t);o.stop(t+duration+.05);
+    }
+  }
+  function tone(freq,time,duration,volume,type='sine',bend=1){
+    if(!audioCtx)return;
+    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+    osc.type=type;osc.frequency.setValueAtTime(freq*bend,time);
+    osc.frequency.exponentialRampToValueAtTime(freq,time+.055);
+    gain.gain.setValueAtTime(.0001,time);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.002,volume),time+.009);
+    gain.gain.exponentialRampToValueAtTime(.0001,time+duration);
+    osc.connect(gain);gain.connect(master);osc.start(time);osc.stop(time+duration+.02);
+  }
+  function speak(text,delay=0){
+    if(!voiceEnabled.checked||!('speechSynthesis' in window))return;
+    setTimeout(()=>{
+      try{
+        window.speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(text);
+        u.lang='en-US';u.rate=1.05;u.pitch=.9;u.volume=.95;
+        window.speechSynthesis.speak(u);
+      }catch(e){}
+    },delay);
+  }
+  function playSynthBull(){
+    if(!unlockAudio())return;
+    const t=audioCtx.currentTime+.02;
+    if(soundStyle.value==='impact'){
+      // sharp hit, deep thump, rising sweep, sparkling arpeggio and echo
+      const ns=audioCtx.createBufferSource();ns.buffer=noiseBuffer;
+      const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2800;bp.Q.value=.9;
+      const ng=audioCtx.createGain();envelope(ng.gain,t,.001,.8,.07);
+      ns.connect(bp);bp.connect(ng);ng.connect(master);ns.start(t);ns.stop(t+.1);
+      const th=oscSound('sine',200,t,.20,.9);th.frequency.exponentialRampToValueAtTime(50,t+.18);
+      const t2=t+.03;
+      for(const det of [-10,10]){
+        const o=audioCtx.createOscillator();o.type='sawtooth';o.detune.value=det;
+        o.frequency.setValueAtTime(330,t2);o.frequency.exponentialRampToValueAtTime(2640,t2+.22);
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.Q.value=8;
+        lp.frequency.setValueAtTime(900,t2);lp.frequency.exponentialRampToValueAtTime(7000,t2+.22);
+        const g=audioCtx.createGain();g.gain.setValueAtTime(.0001,t2);
+        g.gain.exponentialRampToValueAtTime(.16,t2+.025);
+        g.gain.setValueAtTime(.16,t2+.2);g.gain.exponentialRampToValueAtTime(.0001,t2+.34);
+        o.connect(lp);lp.connect(g);g.connect(master);g.connect(echo);
+        o.start(t2);o.stop(t2+.4);
+      }
+      [1318.5,1568,2093,2637,3136,4186].forEach((f,i)=>{
+        const st=t+.24+i*.045;
+        oscSound('square',f,st,.14,.06,true);
+        oscSound('sine',f*2,st,.22,.035,true);
+      });
+      [523.25,659.25,783.99,1046.5].forEach(f=>shimmer(f,t+.3,1.3,.07));
+    }else if(soundStyle.value==='bell'){
+      tone(930,t,.64,.20,'sine',1.07);tone(1860,t,.44,.09,'sine',1.02);
+      tone(2780,t,.26,.038,'sine',1.01);tone(1244,t+.14,.72,.19,'sine',1.05);
+      tone(2488,t+.14,.44,.065,'triangle',1.03);
+    }else{
+      tone(420,t,.13,.14,'triangle',1.5);tone(659.25,t+.045,.22,.19,'sine',1.16);
+      tone(830.61,t+.12,.29,.20,'triangle',1.08);tone(1046.5,t+.2,.52,.19,'sine',1.05);
+      tone(2093,t+.22,.3,.045,'sine',1.04);tone(1318.51,t+.2,.48,.065,'sine',1.05);
+    }
+    speak('Bull!',120);
+    try{if(navigator.vibrate)navigator.vibrate(65);}catch(e){}
+  }
+  function playBull(kind='outer'){
+    if(soundStyle.value==='sample'){
+      playSample(kind);
+      try{if(navigator.vibrate)navigator.vibrate(65);}catch(e){}
+    }else playSynthBull();
+  }
+  function playResult(kind){
+    if(unlockAudio()){
+      const t=audioCtx.currentTime+.03;
+      if(kind==='one'){
+        [523.25,659.25,783.99].forEach((f,i)=>{
+          oscSound('triangle',f,t+i*.11,.34,.115,true);
+          oscSound('sine',f*2,t+i*.11,.22,.038,true);
+        });
+      }else if(kind==='hat'){
+        [392,523.25,659.25].forEach((f,i)=>brass(f,t+i*.12,.16,.09));
+        [783.99,1046.5,1318.5].forEach(f=>brass(f,t+.38,1.4,.07));
+        const ns=audioCtx.createBufferSource();ns.buffer=noiseBuffer;ns.loop=true;
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=5000;
+        const g=audioCtx.createGain();envelope(g.gain,t+.38,.02,.22,1.4);
+        ns.connect(hp);hp.connect(g);g.connect(master);ns.start(t+.38);ns.stop(t+1.9);
+        [2093,2637,3136,4186].forEach((f,i)=>oscSound('sine',f,t+.45+i*.06,.3,.04,true));
+      }else{
+        [523.25,659.25].forEach((f,i)=>brass(f,t+i*.11,.14,.09));
+        [587.33,739.99,880].forEach(f=>brass(f,t+.24,.9,.07));
+      }
+    }
+    speak(kind==='hat'?'Hat trick!':kind==='low'?'Low ton!':'One bull!',kind==='hat'?450:kind==='low'?350:200);
+    showPop(kind==='hat'?'HAT TRICK!':kind==='low'?'LOW TON!':'ONE BULL!',kind);
+  }
+  function showPop(label,kind=''){
+    bullPop.textContent=label;
+    bullPop.className=kind?('special '+kind):'';
+    void bullPop.offsetWidth;
+    bullPop.classList.add('show');
+    flashAt=performance.now();drawOverlay();
+  }
+  function roundBulls(){return shots.filter(x=>x!=='miss').length;}
+  function updateRoundUI(){
+    roundTitle.textContent='ROUND '+roundNo;
+    roundCurrent.textContent=roundBulls()+' / 3 BULL';
+    dartSlots.replaceChildren();
+    for(let i=0;i<3;i++){
+      const span=document.createElement('span'),shot=shots[i];
+      span.className='dart-slot'+(shot===undefined?'':shot==='miss'?' miss':shot==='inner'?' bull inner':' bull');
+      span.textContent=(i+1)+'投目 · '+(shot===undefined?'—':shot==='miss'?'× MISS':shot==='inner'?'🎯 INNER':'🎯 OUTER');
+      dartSlots.appendChild(span);
+    }
+    addBullBtn.disabled=roundLocked;addInnerBtn.disabled=roundLocked;
+    missBtn.disabled=roundLocked;undoBtn.disabled=shots.length===0;
+    endRoundBtn.textContent=roundLocked?'▶ 次のラウンド [Enter]':'🏁 3投終了 [Enter]';
+    if(!roundLocked)roundResult.textContent=shots.length?('記録済 '+shots.length+' / 3投'):'投球待ち 🎯';
+    roundHistory.replaceChildren();
+    if(!roundLog.length){const s=document.createElement('span');s.textContent='結果の履歴がここに表示されます';roundHistory.appendChild(s);}
+    else roundLog.slice(-5).forEach(r=>{const s=document.createElement('span');s.className='chip';s.textContent='R'+r.round+': '+r.label;roundHistory.appendChild(s);});
+  }
+  function cancelResultTimers(){
+    ++roundRevision;
+    if(resultTimer){clearTimeout(resultTimer);resultTimer=null;}
+    if(autoNextTimer){clearTimeout(autoNextTimer);autoNextTimer=null;}
+  }
+  function nextRound(){
+    cancelResultTimers();roundAdvanceAfter=0;
+    roundNo++;shots=[];roundLocked=false;retrievalActive=false;retrievalMotionStreak=0;
+    postRetrieve=false;stableSince=0;roundStartedAt=performance.now();
+    roundResult.textContent='投球待ち 🎯';
+    updateRoundUI();invalidateBase(true);
+    setState(watching?'判定中':'カメラ待機中',watching?'armed':'');
+    detail.textContent='次の3投をどうぞ！';
+  }
+  function finishRound(reason='manual'){
+    if(roundLocked)return;
+    while(shots.length<3)shots.push('miss');
+    const bulls=roundBulls();
+    const label=bulls===3?'🎩 HAT TRICK':bulls===2?'🔥 LOW TON':bulls===1?'🎯 ONE BULL':'0 BULL';
+    roundLog.push({round:roundNo,bulls,label});
+    roundLocked=true;roundFinalizedAt=performance.now();
+    roundResult.textContent=label;
+    updateRoundUI();
+    detail.textContent='ROUND '+roundNo+' 確定：'+label+(reason==='retrieve'?' / 回収動作から判定':'');
+    const revision=++roundRevision;
+    const playsHit=reason==='third-bull'||reason==='quick-added';
+    const delay=playsHit?2000:reason==='quick'?300:180;
+    roundAdvanceAfter=roundFinalizedAt+(bulls>0?delay+(bulls===3?1600:1200):900);
+    if(bulls>=1){
+      setState(label,'bull');
+      resultTimer=setTimeout(()=>{
+        if(roundRevision===revision && roundLocked)playResult(bulls===3?'hat':bulls===2?'low':'one');
+      },delay);
+    }else{
+      setState('0 BULL / ALL MISS');
+      if(reason==='quick')showPop('ALL MISS','zero');
+    }
+    // Quick registration is intentionally one-key: complete, announce, advance.
+    if(reason==='quick'||reason==='quick-added'){
+      const autoDelay=bulls===0?900:delay+(bulls===3?2000:1700);
+      autoNextTimer=setTimeout(()=>{
+        if(roundRevision===revision && roundLocked)nextRound();
+      },autoDelay);
+    }
+  }
+  function markShot(kind){
+    if(roundLocked||shots.length>=3)return false;
+    shots.push(kind);
+    if(kind!=='miss'){count++;bullCountEl.textContent=String(count);}
+    updateRoundUI();
+    if(shots.length>=3)finishRound(kind!=='miss'?'third-bull':'third-shot');
+    return true;
+  }
+  function celebrate(kind='outer',shouldCount=true){
+    if(shouldCount && (roundLocked||shots.length>=3))return;
+    if(shouldCount)markShot(kind);
+    playBull(kind);
+    showPop(kind==='inner'?'INNER BULL!':'BULL!',kind==='inner'?'inner':'');
+    if(!roundLocked){
+      setState(kind==='inner'?'INNER BULL!':'OUTER BULL!','bull');
+      detail.textContent=shouldCount?'BULL！ 次の1本をどうぞ':'効果音を再生しました';
+    }
+    drawOverlay();
+    const capturedRound=roundNo;
+    setTimeout(()=>{
+      if(roundLocked||roundNo!==capturedRound)return;
+      setState(watching?'判定中':'カメラ待機中',watching?'armed':'');drawOverlay();
+    },950);
+  }
+  function markMiss(){if(markShot('miss')&&!roundLocked)detail.textContent='MISSを記録しました';}
+  function undoShot(){
+    if(shots.length===0)return;
+    if(roundLocked){
+      // Allow undo of the 3rd shot even immediately after the automatic finalization.
+      cancelResultTimers();roundLocked=false;
+      if(roundLog.at(-1)?.round===roundNo)roundLog.pop();
+    }
+    const last=shots.pop();
+    if(last!=='miss'){count=Math.max(0,count-1);bullCountEl.textContent=String(count);}
+    updateRoundUI();detail.textContent='直前の1投を取り消しました';
+  }
+  function toggleLastBull(){
+    const idx=shots.findLastIndex(x=>x==='outer'||x==='inner');
+    if(idx<0){detail.textContent='切り替えるBULLがありません';return;}
+    const type=shots[idx]==='outer'?'inner':'outer';shots[idx]=type;
+    updateRoundUI();playBull(type);
+    showPop(type==='inner'?'INNER BULL!':'BULL!',type==='inner'?'inner':'');
+    detail.textContent='直近のブルを'+(type==='inner'?'INNER':'OUTER')+'に修正しました';
+  }
+  function quickSetBulls(n){
+    if(n<0||n>3)return;
+    unlockAudio();preloadSamples();
+    if(roundLocked){
+      cancelResultTimers();roundLocked=false;
+      if(roundLog.at(-1)?.round===roundNo)roundLog.pop();
+    }
+    const previous=roundBulls();
+    const kept=shots.filter(x=>x!=='miss').slice(0,n);
+    while(kept.length<n)kept.push('outer');
+    shots=[...kept,...Array(3-n).fill('miss')];
+    count=Math.max(0,count+n-previous);bullCountEl.textContent=String(count);
+    updateRoundUI();
+    if(n>previous){
+      playBull('outer');showPop('BULL!');
+    }
+    finishRound(n>previous?'quick-added':'quick');
+  }
+  function pressEndRound(){
+    unlockAudio();
+    if(roundLocked)nextRound();else finishRound('manual');
+  }
+  addBullBtn.addEventListener('click',()=>{unlockAudio();preloadSamples();celebrate('outer',true);});
+  addInnerBtn.addEventListener('click',()=>{unlockAudio();preloadSamples();celebrate('inner',true);});
+  missBtn.addEventListener('click',markMiss);
+  undoBtn.addEventListener('click',undoShot);
+  toggleBullBtn.addEventListener('click',toggleLastBull);
+  endRoundBtn.addEventListener('click',pressEndRound);
+  document.querySelectorAll('[data-quick]').forEach(b=>b.addEventListener('click',()=>quickSetBulls(Number(b.dataset.quick))));
+  $('outerTestBtn').addEventListener('click',()=>{unlockAudio();preloadSamples();celebrate('outer',false);});
+  $('innerTestBtn').addEventListener('click',()=>{unlockAudio();preloadSamples();celebrate('inner',false);});
+  $('oneTestBtn').addEventListener('click',()=>playResult('one'));
+  $('lowTestBtn').addEventListener('click',()=>playResult('low'));
+  $('hatTestBtn').addEventListener('click',()=>playResult('hat'));
+  soundBtn.addEventListener('click',()=>{unlockAudio();preloadSamples();celebrate('outer',false);});
+  document.addEventListener('keydown',e=>{
+    if(e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;
+    const focused=e.target;
+    if(focused&&((['INPUT','SELECT','TEXTAREA'].includes(focused.tagName))||focused.isContentEditable))return;
+    // Number keys replace the entire round, including false-positive auto detections.
+    const k=e.key;
+    if(['0','1','2','3'].includes(k)){e.preventDefault();quickSetBulls(Number(k));return;}
+    if(k==='Enter'||k===' '){e.preventDefault();pressEndRound();return;}
+    if(k==='Backspace'||k==='z'||k==='Z'){e.preventDefault();undoShot();return;}
+    if(k==='b'||k==='B'){e.preventDefault();unlockAudio();preloadSamples();celebrate('outer',true);return;}
+    if(k==='i'||k==='I'){e.preventDefault();unlockAudio();preloadSamples();celebrate('inner',true);return;}
+    if(k==='m'||k==='M'){e.preventDefault();markMiss();return;}
+    if(k==='t'||k==='T'){e.preventDefault();toggleLastBull();return;}
+  });
+  updateRoundUI();
+
+  function cameraErrorMessage(e){
+    const name=e?.name||'';
+    if(!navigator.mediaDevices?.getUserMedia || !window.isSecureContext)
+      return 'カメラを利用できません。HTML を直接開いた場合は、HTTPS のサイトに配置して Safari / Chrome から開いてください。';
+    if(name==='NotAllowedError'||name==='PermissionDeniedError')
+      return 'カメラの許可がありません。ブラウザのカメラ権限を「許可」に変更してください。';
+    if(name==='NotFoundError'||name==='OverconstrainedError')
+      return 'カメラが見つかりませんでした。端末の背面カメラを確認してください。';
+    return 'カメラを起動できませんでした。HTTPS で開き直し、カメラを使用中の別アプリを終了して再試行してください。'+(name?' ('+name+')':'');
+  }
+  async function startCamera(){
+    unlockAudio();preloadSamples();clearError();cameraBtn.disabled=true;cameraBtn.textContent='起動中…';
+    try{
+      if(!navigator.mediaDevices?.getUserMedia)throw new Error('No getUserMedia');
+      stream=await navigator.mediaDevices.getUserMedia({
+        audio:false,
+        video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:24,max:30}}
+      });
+      video.srcObject=stream;
+      video.style.display='block';demoImage.style.display='none';
+      await video.play();
+      if(!savedTarget){target.x=.5;target.y=.5;}
+      invalidateBase(false);
+      roundStartedAt=performance.now();
+      watchBtn.disabled=false;
+      cameraBtn.textContent='📷 カメラ停止';
+      setState('カメラ待機中');
+      detail.textContent='ブル中心をタップして「判定開始」';
+      sceneTip.textContent='赤い円をブルに合わせてください';
+      resizeCanvas();
+      if(!loopId)loopId=requestAnimationFrame(loop);
+    }catch(e){
+      console.error(e);
+      stream?.getTracks().forEach(track=>track.stop());stream=null;
+      video.srcObject=null;video.style.display='none';demoImage.style.display='block';
+      showError(cameraErrorMessage(e));
+      cameraBtn.textContent='① カメラ起動';
+    }finally{cameraBtn.disabled=false;}
+  }
+  function stopCamera(){
+    watching=false;stream?.getTracks().forEach(track=>track.stop());stream=null;
+    if(loopId)cancelAnimationFrame(loopId);loopId=0;
+    video.pause();video.srcObject=null;video.style.display='none';demoImage.style.display='block';
+    watchBtn.disabled=true;watchBtn.textContent='② 判定開始';watchBtn.classList.remove('active');
+    cameraBtn.textContent='① カメラ起動';
+    if(!savedTarget){target.x=.53;target.y=.715;}invalidateBase(false);drawOverlay();
+    retrievalActive=false;postRetrieve=false;
+    setState('サンプル画面');sceneTip.textContent='赤い円はタップで動かせます';
+    detail.textContent='サンプル画面 / カメラを起動してください';
+  }
+  cameraBtn.addEventListener('click',()=>{if(stream)stopCamera();else startCamera();});
+  watchBtn.addEventListener('click',()=>{
+    unlockAudio();preloadSamples();clearError();
+    watching=!watching;
+    if(watching){
+      watchBtn.textContent='⏸ 判定停止';watchBtn.classList.add('active');
+      invalidateBase(true);roundStartedAt=performance.now();sceneTip.textContent='ダーツを投げてください 🎯';
+    }else{
+      watchBtn.textContent='② 判定開始';watchBtn.classList.remove('active');
+      invalidateBase(false);setState('カメラ待機中');
+      detail.textContent='停止中 / 判定開始で再開';
+      sceneTip.textContent='赤い円をブルに合わせてください';
+    }
+  });
+
+  function readFrame(){
+    if(!video.videoWidth||!video.videoHeight)return null;
+    const vw=video.videoWidth,vh=video.videoHeight;
+    const aw=scratch.width,ah=scratch.height;
+    const cover=Math.max(aw/vw,ah/vh);
+    const cropW=aw/cover,cropH=ah/cover;
+    const sx=(vw-cropW)*.5,sy=(vh-cropH)*.5;
+    sctx.drawImage(video,sx,sy,cropW,cropH,0,0,aw,ah);
+    const pixels=sctx.getImageData(0,0,aw,ah).data;
+    const luma=new Uint8Array(aw*ah);
+    for(let j=0,i=0;j<luma.length;j++,i+=4){
+      luma[j]=(77*pixels[i]+150*pixels[i+1]+29*pixels[i+2])>>8;
+    }
+    return luma;
+  }
+  function motionNearBoard(frame,now){
+    // Detect the player's arm reaching the dartboard: a large, sustained
+    // moving patch around the board. Flight of a single dart is usually
+    // much smaller and shorter. It is a heuristic and can be toggled off.
+    const prev=previousMotionFrame;
+    previousMotionFrame=frame;
+    if(!prev||!autoRound.checked)return false;
+    const w=scratch.width,h=scratch.height;
+    const cx=Math.round(target.x*w),cy=Math.round(target.y*h),r=effectiveRadius(w,h);
+    const rx=Math.min(w*.42,Math.max(65,r*12));
+    const ry=Math.min(h*.34,Math.max(85,r*16));
+    const x0=Math.max(1,Math.floor(cx-rx)),x1=Math.min(w-2,Math.ceil(cx+rx));
+    const y0=Math.max(1,Math.floor(cy-ry)),y1=Math.min(h-2,Math.ceil(cy+ry));
+    let moved=0,total=0;
+    for(let y=y0;y<y1;y+=4){
+      for(let x=x0;x<x1;x+=4){
+        const i=y*w+x;
+        if(Math.abs(frame[i]-prev[i])>30)moved++;
+        total++;
+      }
+    }
+    const ratio=total?moved/total:0;
+    const significant=ratio>.058;
+    if(significant){
+      retrievalLastMotion=now;
+      retrievalMotionStreak=Math.min(8,retrievalMotionStreak+1);
+      stableSince=0;
+    }else{
+      retrievalMotionStreak=Math.max(0,retrievalMotionStreak-1);
+      if(!stableSince)stableSince=now;
+    }
+    if(!retrievalActive && retrievalMotionStreak>=2 && now-roundStartedAt>5500){
+      retrievalActive=true;
+      holdAt=0;
+      detail.textContent='矢の回収動作を検出中…';
+      setState('回収を確認中');
+    }
+    if(retrievalActive && now-retrievalLastMotion>850){
+      retrievalActive=false;
+      retrievalMotionStreak=0;
+      if(!roundLocked){
+        finishRound('retrieve');
+        postRetrieve=true;
+      }else postRetrieve=true;
+      stableSince=now;
+    }
+    if(roundLocked&&postRetrieve && !retrievalActive && stableSince && now-stableSince>1300 && now-roundFinalizedAt>1650){
+      nextRound();
+    }
+    return significant||retrievalActive;
+  }
+  function processFrame(now){
+    if(!watching)return;
+    const frame=readFrame();
+    if(!frame)return;
+    lastFrame=frame;
+    const activeMotion=motionNearBoard(frame,now);
+    if(activeMotion){holdAt=0;return;}
+    if(roundLocked)return;
+    if(!base){
+      if(now<baselineReadyAt)return;
+      base=frame.slice();
+      cooldownUntil=now+300;
+      setState('判定中','armed');detail.textContent='判定中 / ブルへの命中を待っています';
+      return;
+    }
+    if(now<cooldownUntil){
+      if(now>cooldownUntil-240){
+        base=frame.slice(); // incorporate the previous dart before the next throw
+        setState('判定中','armed');
+      }
+      return;
+    }
+    const w=scratch.width,h=scratch.height;
+    const cx=Math.round(target.x*w),cy=Math.round(target.y*h);
+    const r=effectiveRadius(w,h),r2=r*r;
+    const sens=Number(sensRange.value);
+    // Estimate exposure shift from a sparse grid outside the bull.
+    const samples=[], step=24;
+    let moved=0,total=0;
+    for(let y=15;y<h-15;y+=step){
+      for(let x=15;x<w-15;x+=step){
+        if((x-cx)*(x-cx)+(y-cy)*(y-cy)<(r*2.7)*(r*2.7))continue;
+        const p=y*w+x,delta=base[p]-frame[p];
+        samples.push(delta);
+      }
+    }
+    samples.sort((a,b)=>a-b);
+    const exposure=samples.length?samples[Math.floor(samples.length/2)]:0;
+    for(let k=0;k<samples.length;k++){
+      if(Math.abs(samples[k]-exposure)>35)moved++;
+      total++;
+    }
+    // If the phone or entire image moves, do not count it as a dart.
+    if(total>0 && moved/total>.20){
+      if(!globalMoveAt)globalMoveAt=now;
+      holdAt=0;signalBar.style.width='0%';
+      if(now-globalMoveAt>1000){
+        base=frame.slice();globalMoveAt=0;
+      }
+      if(now-lastDetailAt>300){
+        lastDetailAt=now;
+        setState('動き検出');detail.textContent='画面が動いています / 固定してください';
+      }
+      return;
+    }
+    globalMoveAt=0;
+    const x0=Math.max(0,Math.floor(cx-r)),x1=Math.min(w-1,Math.ceil(cx+r));
+    const y0=Math.max(0,Math.floor(cy-r)),y1=Math.min(h-1,Math.ceil(cy+r));
+    let dark=0,light=0,area=0,innerDark=0,innerArea=0;
+    for(let y=y0;y<=y1;y++){
+      const dy2=(y-cy)*(y-cy),off=y*w;
+      for(let x=x0;x<=x1;x++){
+        if((x-cx)*(x-cx)+dy2>r2)continue;
+        area++;
+        const inner=(x-cx)*(x-cx)+dy2<=r2*.25;
+        if(inner)innerArea++;
+        const d=base[off+x]-frame[off+x]-exposure;
+        if(d>diffs[sens]){dark++;if(inner)innerDark++;}
+        else if(d < -diffs[sens]*1.25)light++;
+      }
+    }
+    // Scale the minimum changed-pixel count with the selected bull size.
+    // At 1-3%, a fixed 9-pixel threshold would miss narrow dart tips entirely.
+    const minimum=Math.max(3,area*densities[sens]);
+    // Strong darkening is expected for the black soft-dart tip / barrel.
+    // A small amount of brightening is permitted for shiny darts, but
+    // removing a previously stuck dart (mostly brightening) is ignored.
+    const strength=dark+.24*light;
+    const hit=strength>=minimum && dark>=Math.max(2,minimum*.45);
+    const ratio=Math.min(1,strength/Math.max(1,minimum));
+    signalBar.style.width=Math.round(ratio*100)+'%';
+    if(now-lastDetailAt>320){
+      lastDetailAt=now;
+      detail.textContent=`変化量 ${Math.round(strength)} / 必要 ${Math.round(minimum)}${hit?'　● 命中候補':''}`;
+      setState(hit?'命中を確認中':'判定中',hit?'bull':'armed');
+    }
+    if(hit){
+      if(!holdAt)holdAt=now;
+      if(now-holdAt>=HOLD_MS){
+        holdAt=0;
+        cooldownUntil=now+COOLDOWN_MS;
+        // v3 hit detection is unchanged; inner/outer classification is a separate heuristic.
+        // Require dense, localized changes in the inner ring to avoid false inner-bulls.
+        const outerDark=dark-innerDark;
+        const innerDensity=innerDark/Math.max(1,innerArea);
+        const outerDensity=outerDark/Math.max(1,area-innerArea);
+        const isInner=autoInner.checked && r>=3 &&
+          innerDark>=Math.max(3,Math.ceil(minimum*.52)) &&
+          innerDark>=dark*.44 && innerDensity>=outerDensity*1.25;
+        celebrate(isInner?'inner':'outer',true);
+      }
+    }else{holdAt=0;}
+  }
+  function loop(t){
+    loopId=requestAnimationFrame(loop);
+    if(stream && t-lastProcess>=PROCESS_MS){
+      lastProcess=t;
+      processFrame(t);
+    }
+    if(t-flashAt<600)drawOverlay();
+  }
+  // Re-acquire the background on return from the lock screen or app switch.
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden && stream&&watching){invalidateBase(true);}
+  });
+  window.addEventListener('resize',resizeCanvas);
+  if('ResizeObserver' in window)new ResizeObserver(resizeCanvas).observe(scene);
+  resizeCanvas();
+})();
+</script>
+</body>
+</html>
