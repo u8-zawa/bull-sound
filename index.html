@@ -151,6 +151,16 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
 #toast{display:none;margin:0 0 10px;border:1px solid var(--red);background:#ffe0d0;color:#8c1c20;border-radius:9px;padding:10px 12px;font-size:12px;white-space:pre-wrap;word-break:break-word}
 #toast.show{display:block}
 @media(min-width:600px){.shell{padding-top:26px}.scene{max-height:580px}}
+/* PC / tablet landscape: camera and round on the left, controls and settings on the right.
+   The last 1fr row absorbs the left column's extra height so the right items stay packed. */
+@media(min-width:960px){
+  .shell{max-width:1160px;padding:28px 24px 48px;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);grid-template-rows:auto auto auto auto auto 1fr;column-gap:28px;align-items:start}
+  .heading{grid-column:1/-1}
+  .scene-wrap{grid-column:1;grid-row:2/-1;max-width:none;margin:0;width:100%}
+  #toast,.actions,.settings,.instructions{grid-column:2}
+  .scene{aspect-ratio:4/3;max-height:none}
+  .scene .demo-photo{object-position:50% 71%}
+}
 @media(max-width:375px){.shell{padding:13px 12px 24px}.heading h1{font-size:22px}.brand-score{min-width:70px;padding-left:9px}.brand-score strong{font-size:27px}.actions{gap:5px}.btn{font-size:11px;padding:9px 4px}.dart-slot{font-size:10px}}
 @media(prefers-reduced-motion:reduce){#bullPop.show{animation:fade-stamp 1.4s linear both}@keyframes fade-stamp{0%{opacity:1;transform:translate(-50%,-50%)}80%{opacity:1}100%{opacity:0}}}
 @media(prefers-color-scheme:dark){
