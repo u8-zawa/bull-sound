@@ -271,6 +271,7 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
     <label class="toggleline"><input id="autoRound" type="checkbox" checked> 矢の回収動作からラウンド終了を自動推定（β版）</label>
     <div class="secondary"><span style="font-size:12px;color:var(--muted)">演出テスト：</span><button id="oneTestBtn" class="small-btn" type="button">ONE BULL</button><button id="lowTestBtn" class="small-btn" type="button">LOW TON</button><button id="hatTestBtn" class="small-btn" type="button">HAT TRICK</button></div>
     <p class="subtle">ブルの大きさは1〜35%で調整できます。カメラを斜めに置いたときは、斜め補正の縦横比と傾きで赤い円を映像上のブルの形（楕円）に合わせてください（100%・0°で真円）。赤い円の位置と設定はこの端末に保存されます。小さいブルは矢の影や軸で誤判定する場合があります。カメラを固定し、矢を回収するときは的付近に手が映るようにしてください。</p>
+    <div class="secondary"><button id="resetSettingsBtn" type="button" class="small-btn">↺ 設定を初期値に戻す</button></div>
   </div>
   <div class="instructions">
     <p><strong>使い方：</strong> カメラを固定 → カメラ起動 → ブル位置とサイズを調整 → 判定開始 → 3投を投げます。BULLは自動記録されます。</p>
@@ -311,7 +312,8 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   };
   const savedPrefs=loadPrefs();
   // aspect (%) and tilt (deg) turn the bull circle into an ellipse for an angled camera.
-  let target={x:.53,y:.715,size:4,aspect:100,tilt:0}, count=0;
+  const DEFAULT_TARGET={x:.53,y:.715,size:4,aspect:100,tilt:0};
+  let target={...DEFAULT_TARGET}, count=0;
   if(typeof savedPrefs.size==='number'&&savedPrefs.size>=1&&savedPrefs.size<=35)target.size=savedPrefs.size;
   if(typeof savedPrefs.aspect==='number'&&savedPrefs.aspect>=30&&savedPrefs.aspect<=100)target.aspect=savedPrefs.aspect;
   if(typeof savedPrefs.tilt==='number'&&savedPrefs.tilt>=-90&&savedPrefs.tilt<=90)target.tilt=savedPrefs.tilt;
@@ -444,6 +446,19 @@ select{border:1.5px solid var(--ink);background:var(--white);color:var(--ink);bo
   resetBtn.addEventListener('click',()=>{
     invalidateBase(true);
     if(!stream)detail.textContent='カメラを起動すると背景を記録できます';
+  });
+  // Back to the defaults written in the HTML. Selected sound files are kept (they have their own clear button).
+  $('resetSettingsBtn').addEventListener('click',()=>{
+    if(!confirm('判定エリアの位置・大きさ・斜め補正・感度・効果音などの設定を初期値に戻しますか？\n（選んだ音声ファイルは残ります）'))return;
+    savedTarget=false;
+    target={...DEFAULT_TARGET};
+    if(stream){target.x=.5;target.y=.5;}
+    sensRange.value=sensRange.defaultValue;sensLabel.textContent=sensRange.value+' / 5';
+    soundStyle.value=(sampleUrls.outer||sampleUrls.inner)?'sample':'impact';
+    for(const box of [voiceEnabled,autoRound,autoInner])box.checked=box.defaultChecked;
+    updateSizeReadout();updateEllipseReadout();
+    invalidateBase(true);savePrefs();drawOverlay();
+    if(!watching)detail.textContent='設定を初期値に戻しました';
   });
 
   // User-selected sound files, kept only in this browser. Decode to WebAudio for low-latency playback.
